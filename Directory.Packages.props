@@ -3,20 +3,9 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.14" />
-    <PackageVersion Include="TagLibSharp" Version="2.3.0" />
-    <PackageVersion Include="xunit.v3" Version="4.0.2" />
-    <!-- Rapport TRX des tests (option report-trx de dotnet test, en CI) : même version que Microsoft.Testing.Platform tiré par xunit.v3. -->
-    <PackageVersion Include="Microsoft.Testing.Extensions.TrxReport" Version="2.5.1" />
+    <!-- Bibliothèques partagées, publiées par la CI du dépôt localify (registre NuGet du projet pmj.bailly/localify).
+         À monter avec le serveur : une version X.Y.Z sur tag, 0.1.0-ci.N sur main. -->
+    <PackageVersion Include="Localify.UI" Version="0.1.0-ci.19" />
     <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.120" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.120" />
     <PackageVersion Include="Xamarin.AndroidX.Media3.Session" Version="1.11.1" />

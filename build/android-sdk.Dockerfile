@@ -1,4 +1,4 @@
-# Image de build Android (.NET 10 + workload MAUI + SDK Android). Utilisée par la CI (job android)
+# Image de build Android (.NET 10 + workload MAUI + SDK Android). Utilisée par la CI (job android-apk)
 # et pour builder l'APK en local sans installer Android Studio :
 #   docker build -f build/android-sdk.Dockerfile -t localify-android-sdk build
 #   docker run --rm -v "$PWD:/src" -w /src localify-android-sdk \

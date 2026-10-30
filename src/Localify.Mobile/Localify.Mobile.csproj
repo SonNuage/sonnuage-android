@@ -41,8 +41,13 @@
     <PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Localify.UI\Localify.UI.csproj" />
+  <!-- Pages et composants partagés avec le client web : sources du dépôt localify s'il est cloné à côté (développement),
+       sinon paquet NuGet publié par sa CI (version dans Directory.Packages.props). -->
+  <ItemGroup Condition="Exists('$(LocalifyUiProject)')">
+    <ProjectReference Include="$(LocalifyUiProject)" />
+  </ItemGroup>
+  <ItemGroup Condition="!Exists('$(LocalifyUiProject)')">
+    <PackageReference Include="Localify.UI" />
   </ItemGroup>
 
 </Project>

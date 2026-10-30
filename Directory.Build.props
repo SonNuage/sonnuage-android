@@ -6,5 +6,8 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Version>0.1.0</Version>
     <Authors>pmj.bailly</Authors>
+    <!-- Dépôt localify (serveur + client web) cloné à côté de celui-ci : ses sources remplacent le paquet Localify.UI. -->
+    <LocalifyRepo Condition="'$(LocalifyRepo)' == ''">$(MSBuildThisFileDirectory)..\localify</LocalifyRepo>
+    <LocalifyUiProject>$(LocalifyRepo)\src\Localify.UI\Localify.UI.csproj</LocalifyUiProject>
   </PropertyGroup>
 </Project>
