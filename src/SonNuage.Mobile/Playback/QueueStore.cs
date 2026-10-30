@@ -18,7 +18,7 @@ public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiC
     public string CurrentKey => accounts.ScopedKey(BaseKey);
 
     /// <summary>
-    /// À appeler sur le thread du lecteur ; l'écriture se fait ensuite en arrière-plan. <paramref name="key"/> est celle
+    /// À appeler sur le thread du lecteur. L'écriture se fait ensuite en arrière-plan. <paramref name="key"/> est celle
     /// du compte à qui appartient la file jouée (null : rien à sauver, par exemple pendant un changement de compte).
     /// </summary>
     public void Save(Media3IPlayer player, string? key)

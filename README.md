@@ -11,7 +11,7 @@ Application Android de [SonNuage](https://git.pmjb.org/pmj.bailly/sonnuage), ser
 Les pages et composants viennent de la bibliothèque `SonNuage.UI` du dépôt
 [sonnuage](https://git.pmjb.org/pmj.bailly/sonnuage) :
 
-- **en CI** : paquet NuGet publié par la CI de `sonnuage` (version dans `Directory.Packages.props`) ;
+- **en CI** : paquet NuGet publié par la CI de `sonnuage` (version dans `Directory.Packages.props`)
 - **en développement** : si `sonnuage` est cloné à côté de ce dépôt (`../sonnuage`), ses sources sont utilisées
   directement (voir `Directory.Build.props`, propriété `SonNuageRepo`).
 
@@ -36,16 +36,16 @@ de la CI (autre clé), il faut d'abord désinstaller l'appli.
 ## Fonctionnement
 
 - **Comptes** : au premier lancement, l'application demande l'adresse du serveur puis l'identifiant. Plusieurs
-  comptes (un utilisateur sur un serveur, éventuellement plusieurs serveurs) peuvent être connectés en même temps ;
+  comptes (un utilisateur sur un serveur, éventuellement plusieurs serveurs) peuvent être connectés en même temps.
   **Réglages › Comptes** affiche le compte actif, permet d'en ajouter un, de changer de compte actif ou de se
-  déconnecter d'un compte précis. Le compte actif fixe la bibliothèque, la lecture, Android Auto et la notification ;
-  en changer arrête la lecture et recharge la file sauvegardée de l'autre compte.
+  déconnecter d'un compte précis. Le compte actif fixe la bibliothèque, la lecture, Android Auto et la notification.
+  En changer arrête la lecture et recharge la file sauvegardée de l'autre compte.
 - Chaque compte a ses propres jetons (SecureStorage, renouvelés un par un avec un verrou par compte), sa file
   d'attente, ses réglages de lecture et ses entrées du cache audio. Une installation mono-compte antérieure est
   migrée automatiquement en un premier compte (session, file et réglages compris).
 - **Plantages** : toute exception non gérée (.NET, tâches, Java) est écrite dans `crash.log` (dossier privé de
   l'appli) et dans logcat (`adb logcat -s SonNuage`). Au lancement suivant, un écran natif affiche le rapport avec un
-  bouton « Copier le rapport » ; si le démarrage lui-même échoue, cet écran remplace l'interface.
+  bouton « Copier le rapport ». Si le démarrage lui-même échoue, cet écran remplace l'interface.
 
 ## CI/CD GitLab
 

@@ -88,7 +88,7 @@ public sealed class MobilePlatform : IPlatformInfo
     public bool HasMeteredNetworkDetection => true;
     public string Name => "android";
 
-    /// <summary>Wi-Fi/Ethernet : qualité normale ; réseau facturé à l'usage (4G…) : qualité mobile.</summary>
+    /// <summary>Wi-Fi/Ethernet : qualité normale. Réseau facturé à l'usage (4G…) : qualité mobile.</summary>
     public static bool IsMetered()
     {
         var cm = (Android.Net.ConnectivityManager?)Android.App.Application.Context.GetSystemService(Android.Content.Context.ConnectivityService);

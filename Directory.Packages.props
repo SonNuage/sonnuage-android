@@ -5,14 +5,14 @@
   <ItemGroup>
     <!-- Bibliothèques partagées, publiées par la CI du dépôt sonnuage (registre NuGet du projet pmj.bailly/sonnuage).
          À monter avec le serveur : une version X.Y.Z sur tag, 0.1.0-ci.N sur main. -->
-    <PackageVersion Include="SonNuage.UI" Version="0.1.0-ci.20" />
+    <PackageVersion Include="SonNuage.UI" Version="0.1.0-ci.22" />
     <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.120" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.120" />
     <PackageVersion Include="Xamarin.AndroidX.Media3.Session" Version="1.11.1" />
     <PackageVersion Include="Xamarin.AndroidX.Media3.ExoPlayer" Version="1.11.1" />
     <PackageVersion Include="Xamarin.AndroidX.Media3.DataSource" Version="1.11.1" />
     <PackageVersion Include="Xamarin.AndroidX.Media3.Common" Version="1.11.1" />
-    <!-- Media3 tire androidx.core 1.19 ; core-ktx doit suivre sinon classes en double au dex. -->
+    <!-- Media3 tire androidx.core 1.19. Core-ktx doit suivre sinon classes en double au dex. -->
     <PackageVersion Include="Xamarin.AndroidX.Core.Core.Ktx" Version="1.19.0.1" />
   </ItemGroup>
 </Project>

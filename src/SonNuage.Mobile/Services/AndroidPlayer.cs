@@ -11,7 +11,7 @@ namespace SonNuage.Mobile.Services;
 
 /// <summary>
 /// Lecteur de l'interface Blazor sur Android : simple télécommande (MediaController) du <see cref="PlaybackService"/>.
-/// La file vit dans le service, ce qui la partage avec la notification et Android Auto ; l'état exposé ici est
+/// La file vit dans le service, ce qui la partage avec la notification et Android Auto. L'état exposé ici est
 /// relu depuis le contrôleur à chaque événement. Le MediaController n'est utilisable que depuis le thread principal.
 /// </summary>
 public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settings, LibraryBrowser browser) : IPlayer, IRestorablePlayer

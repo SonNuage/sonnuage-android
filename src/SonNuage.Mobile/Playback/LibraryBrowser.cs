@@ -111,7 +111,7 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
 
     /// <summary>
     /// Transforme ce que demande un contrôleur (Android Auto, Assistant, l'appli) en file jouable.
-    /// Les éléments venant de l'appli portent déjà la piste complète ; les autres sont des identifiants à charger.
+    /// Les éléments venant de l'appli portent déjà la piste complète. Les autres sont des identifiants à charger.
     /// </summary>
     public async Task<(List<MediaItem> Items, int StartIndex)> ResolveAsync(IList<MediaItem> requested, int startIndex)
     {

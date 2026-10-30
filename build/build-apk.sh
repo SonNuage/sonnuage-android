@@ -2,7 +2,7 @@
 # Build de l'APK dans l'image sonnuage-android-sdk sans toucher aux bin/obj de l'hôte :
 #   docker run --rm -v "$PWD:/host:ro" -v "$PWD/../sonnuage:/sonnuage-src:ro" -v "$PWD/out:/out" \
 #     -v sonnuage-nuget:/root/.nuget/packages sonnuage-android-sdk sh /host/build/build-apk.sh [Debug|Release]
-# Le dépôt sonnuage monté en /sonnuage-src fournit SonNuage.UI en sources ; sans lui, le paquet NuGet est utilisé
+# Le dépôt sonnuage monté en /sonnuage-src fournit SonNuage.UI en sources. Sans lui, le paquet NuGet est utilisé
 # (registre privé : définir SONNUAGE_NUGET_TOKEN, un jeton d'accès GitLab avec read_api).
 set -e
 CONFIG=${1:-Release}
