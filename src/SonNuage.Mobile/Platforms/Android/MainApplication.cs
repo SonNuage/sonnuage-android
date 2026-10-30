@@ -1,8 +1,8 @@
 using Android.App;
 using Android.Runtime;
-using Localify.Mobile.Services;
+using SonNuage.Mobile.Services;
 
-namespace Localify.Mobile;
+namespace SonNuage.Mobile;
 
 [Application]
 public sealed class MainApplication(IntPtr handle, JniHandleOwnership ownership) : MauiApplication(handle, ownership)

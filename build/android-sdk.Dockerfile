@@ -1,8 +1,8 @@
 # Image de build Android (.NET 10 + workload MAUI + SDK Android). Utilisée par la CI (job android-apk)
 # et pour builder l'APK en local sans installer Android Studio :
-#   docker build -f build/android-sdk.Dockerfile -t localify-android-sdk build
-#   docker run --rm -v "$PWD:/src" -w /src localify-android-sdk \
-#     dotnet publish src/Localify.Mobile -f net10.0-android -c Release -o out/android
+#   docker build -f build/android-sdk.Dockerfile -t sonnuage-android-sdk build
+#   docker run --rm -v "$PWD:/src" -w /src sonnuage-android-sdk \
+#     dotnet publish src/SonNuage.Mobile -f net10.0-android -c Release -o out/android
 FROM mcr.microsoft.com/dotnet/sdk:10.0
 
 ARG ANDROID_API=36

@@ -1,13 +1,13 @@
-# Pipeline Localify Android
+# Pipeline SonNuage Android
 #  - prepare : image de build (SDK Android + workload MAUI), reconstruite quand sa recette change
-#  - build   : APK signé en artefact (dist/localify-X.Y.Z.apk)
+#  - build   : APK signé en artefact (dist/sonnuage-X.Y.Z.apk)
 #  - release : sur tag vX.Y.Z, APK dans le registre de paquets génériques et release GitLab
 #
-# Localify.UI vient du registre NuGet du projet pmj.bailly/localify : ce projet doit être autorisé dans
-# localify → Settings → CI/CD → Job token permissions (liste des projets autorisés).
+# SonNuage.UI vient du registre NuGet du projet pmj.bailly/sonnuage : ce projet doit être autorisé dans
+# sonnuage → Settings → CI/CD → Job token permissions (liste des projets autorisés).
 #
 # Signature (Settings > CI/CD > Variables, masquées) :
-#   ANDROID_KEYSTORE_BASE64   keystore encodé en base64 (base64 -w0 localify.keystore)
+#   ANDROID_KEYSTORE_BASE64   keystore encodé en base64 (base64 -w0 sonnuage.keystore)
 #   ANDROID_KEYSTORE_PASSWORD mot de passe du keystore
 #   ANDROID_KEY_ALIAS         alias de la clé
 #   ANDROID_KEY_PASSWORD      mot de passe de la clé
@@ -71,19 +71,19 @@ android-apk:
         echo "Variables de signature absentes (ANDROID_KEYSTORE_BASE64…) : voir l'en-tête de ce fichier." >&2
         exit 1
       fi
-      echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$CI_PROJECT_DIR/localify.keystore"
-    - dotnet nuget update source localify --username gitlab-ci-token --password "$CI_JOB_TOKEN" --store-password-in-clear-text --configfile nuget.config
-    - dotnet publish src/Localify.Mobile/Localify.Mobile.csproj -f net10.0-android -c Release -o out
+      echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$CI_PROJECT_DIR/sonnuage.keystore"
+    - dotnet nuget update source sonnuage --username gitlab-ci-token --password "$CI_JOB_TOKEN" --store-password-in-clear-text --configfile nuget.config
+    - dotnet publish src/SonNuage.Mobile/SonNuage.Mobile.csproj -f net10.0-android -c Release -o out
         -p:Version="$VERSION" -p:ApplicationVersion="$CI_PIPELINE_IID"
-        -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$CI_PROJECT_DIR/localify.keystore"
+        -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$CI_PROJECT_DIR/sonnuage.keystore"
         -p:AndroidSigningKeyAlias="$ANDROID_KEY_ALIAS"
         -p:AndroidSigningStorePass=env:ANDROID_KEYSTORE_PASSWORD -p:AndroidSigningKeyPass=env:ANDROID_KEY_PASSWORD
-    - mkdir -p dist && cp out/*-Signed.apk "dist/localify-$VERSION.apk"
-    - rm -f "$CI_PROJECT_DIR/localify.keystore"
+    - mkdir -p dist && cp out/*-Signed.apk "dist/sonnuage-$VERSION.apk"
+    - rm -f "$CI_PROJECT_DIR/sonnuage.keystore"
     # Contrôle : l'APK publié est bien signé (sinon Android refuse de l'installer).
-    - $ANDROID_HOME/build-tools/*/apksigner verify --print-certs "dist/localify-$VERSION.apk" | head -3
+    - $ANDROID_HOME/build-tools/*/apksigner verify --print-certs "dist/sonnuage-$VERSION.apk" | head -3
   artifacts:
-    name: localify-android
+    name: sonnuage-android
     paths: [dist/]
     expire_in: 30 days
 
@@ -96,8 +96,8 @@ release:
   script:
     - *version
     - apk add --no-cache curl > /dev/null
-    - APK_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/localify-android/${VERSION}/localify-${VERSION}.apk"
-    - 'curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "dist/localify-$VERSION.apk" "$APK_URL"'
+    - APK_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/sonnuage-android/${VERSION}/sonnuage-${VERSION}.apk"
+    - 'curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "dist/sonnuage-$VERSION.apk" "$APK_URL"'
     - >
-      release-cli create --name "Localify Android $VERSION" --tag-name "$CI_COMMIT_TAG"
-      --assets-link "{\"name\":\"localify-$VERSION.apk\",\"url\":\"$APK_URL\",\"link_type\":\"package\"}"
+      release-cli create --name "SonNuage Android $VERSION" --tag-name "$CI_COMMIT_TAG"
+      --assets-link "{\"name\":\"sonnuage-$VERSION.apk\",\"url\":\"$APK_URL\",\"link_type\":\"package\"}"

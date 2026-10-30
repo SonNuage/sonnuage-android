@@ -1,13 +1,13 @@
 using AndroidX.Media3.DataSource;
 using AndroidX.Media3.DataSource.Cache;
-using Localify.Contracts;
-using Localify.Mobile.Services;
-using Localify.UI.Services;
+using SonNuage.Contracts;
+using SonNuage.Mobile.Services;
+using SonNuage.UI.Services;
 
-namespace Localify.Mobile.Playback;
+namespace SonNuage.Mobile.Playback;
 
 /// <summary>
-/// Résout localify://track/{id} en URL de flux au moment du chargement : qualité selon le réseau (Wi-Fi / mobile)
+/// Résout sonnuage://track/{id} en URL de flux au moment du chargement : qualité selon le réseau (Wi-Fi / mobile)
 /// et jeton média renouvelé. La clé de cache ne dépend que de la piste et de la qualité, pas du jeton.
 /// Si une autre qualité est déjà entièrement en cache (pré-chargée en Wi-Fi par exemple), elle est préférée :
 /// aucun octet réseau.

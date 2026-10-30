@@ -5,11 +5,11 @@
     <OutputType>Exe</OutputType>
     <UseMaui>true</UseMaui>
     <SingleProject>true</SingleProject>
-    <RootNamespace>Localify.Mobile</RootNamespace>
+    <RootNamespace>SonNuage.Mobile</RootNamespace>
     <EnableDefaultCssItems>false</EnableDefaultCssItems>
 
-    <ApplicationTitle>Localify</ApplicationTitle>
-    <ApplicationId>org.pmjb.localify</ApplicationId>
+    <ApplicationTitle>SonNuage</ApplicationTitle>
+    <ApplicationId>org.pmjb.sonnuage</ApplicationId>
     <ApplicationDisplayVersion>$(Version)</ApplicationDisplayVersion>
     <!-- Surchargé par la CI (-p:ApplicationVersion=$CI_PIPELINE_IID) : doit croître à chaque build installé. -->
     <ApplicationVersion>1</ApplicationVersion>
@@ -41,13 +41,13 @@
     <PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" />
   </ItemGroup>
 
-  <!-- Pages et composants partagés avec le client web : sources du dépôt localify s'il est cloné à côté (développement),
+  <!-- Pages et composants partagés avec le client web : sources du dépôt sonnuage s'il est cloné à côté (développement),
        sinon paquet NuGet publié par sa CI (version dans Directory.Packages.props). -->
-  <ItemGroup Condition="Exists('$(LocalifyUiProject)')">
-    <ProjectReference Include="$(LocalifyUiProject)" />
+  <ItemGroup Condition="Exists('$(SonNuageUiProject)')">
+    <ProjectReference Include="$(SonNuageUiProject)" />
   </ItemGroup>
-  <ItemGroup Condition="!Exists('$(LocalifyUiProject)')">
-    <PackageReference Include="Localify.UI" />
+  <ItemGroup Condition="!Exists('$(SonNuageUiProject)')">
+    <PackageReference Include="SonNuage.UI" />
   </ItemGroup>
 
 </Project>

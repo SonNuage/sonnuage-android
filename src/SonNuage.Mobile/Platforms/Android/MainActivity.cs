@@ -3,7 +3,7 @@ using Android.App;
 using Android.Content.PM;
 using Android.OS;
 
-namespace Localify.Mobile;
+namespace SonNuage.Mobile;
 
 [Activity(
     Theme = "@style/Maui.SplashTheme",

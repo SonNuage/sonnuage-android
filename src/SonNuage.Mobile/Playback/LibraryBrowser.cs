@@ -1,9 +1,9 @@
 using AndroidX.Media3.Common;
-using Localify.Contracts;
-using Localify.Mobile.Services;
-using Localify.UI.Services;
+using SonNuage.Contracts;
+using SonNuage.Mobile.Services;
+using SonNuage.UI.Services;
 
-namespace Localify.Mobile.Playback;
+namespace SonNuage.Mobile.Playback;
 
 /// <summary>
 /// Identifiants de l'arborescence Android Auto. Une piste listée dans un contexte porte ce contexte
@@ -43,7 +43,7 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
         return auth.IsAuthenticated;
     }
 
-    public MediaItem RootItem() => Folder(BrowseIds.Root, "Localify", MediaMetadata.MediaTypeFolderMixed);
+    public MediaItem RootItem() => Folder(BrowseIds.Root, "SonNuage", MediaMetadata.MediaTypeFolderMixed);
 
     public async Task<IList<MediaItem>> ChildrenAsync(string parentId)
     {
@@ -122,7 +122,7 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
             var search = TrackItems.SearchQuery(requested[0]);
             if (mediaId.Length == 0 && search is not null)
             {
-                // « Ok Google, mets <requête> sur Localify »
+                // « Ok Google, mets <requête> sur SonNuage »
                 var found = await api.SearchAsync(search, 50);
                 var tracks = found?.Tracks.ToList() ?? [];
                 if (tracks.Count == 0 && found?.Albums.FirstOrDefault() is { } album) tracks = await TracksAsync(BrowseIds.Album(album.Id));

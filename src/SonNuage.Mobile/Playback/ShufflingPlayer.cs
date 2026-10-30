@@ -1,6 +1,6 @@
 using AndroidX.Media3.Common;
 
-namespace Localify.Mobile.Playback;
+namespace SonNuage.Mobile.Playback;
 
 /// <summary>
 /// Aléatoire « physique » : activer le shuffle réordonne réellement la file (piste en cours en tête, suite mélangée)

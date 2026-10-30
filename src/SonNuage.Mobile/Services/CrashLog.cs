@@ -1,6 +1,6 @@
 using Android.Runtime;
 
-namespace Localify.Mobile.Services;
+namespace SonNuage.Mobile.Services;
 
 /// <summary>
 /// Filet de sécurité : toute exception non gérée (.NET, tâches, Java) est écrite dans un fichier avant que le
@@ -31,11 +31,11 @@ public static class CrashLog
         {
             var text = $"""
                 ==== {DateTimeOffset.Now:yyyy-MM-dd HH:mm:ss zzz} · {source} ====
-                Localify {AppInfo.Current.VersionString} ({AppInfo.Current.BuildString}) · Android {Android.OS.Build.VERSION.Release} (API {(int)Android.OS.Build.VERSION.SdkInt}) · {Android.OS.Build.Manufacturer} {Android.OS.Build.Model}
+                SonNuage {AppInfo.Current.VersionString} ({AppInfo.Current.BuildString}) · Android {Android.OS.Build.VERSION.Release} (API {(int)Android.OS.Build.VERSION.SdkInt}) · {Android.OS.Build.Manufacturer} {Android.OS.Build.Model}
                 {exception}
 
                 """;
-            Android.Util.Log.Error("Localify", text);
+            Android.Util.Log.Error("SonNuage", text);
             var path = PathOrNull();
             if (path is null) return;
             // On garde les derniers plantages, pas un historique sans fin.
@@ -108,7 +108,7 @@ public sealed class CrashPage : ContentPage
             RowDefinitions = [new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star), new(GridLength.Auto)],
             Children =
             {
-                new Label { Text = next is null ? NativeText.Get("crash.startFailed", "Localify n'a pas pu démarrer") : NativeText.Get("crash.stoppedLastTime", "Localify s'est arrêté la dernière fois"), FontSize = 22, FontAttributes = FontAttributes.Bold, TextColor = Colors.White },
+                new Label { Text = next is null ? NativeText.Get("crash.startFailed", "SonNuage n'a pas pu démarrer") : NativeText.Get("crash.stoppedLastTime", "SonNuage s'est arrêté la dernière fois"), FontSize = 22, FontAttributes = FontAttributes.Bold, TextColor = Colors.White },
                 Row(1, new Label { Text = NativeText.Get("crash.intro", "Voici le rapport d'erreur. Copiez-le pour le transmettre."), TextColor = Color.FromArgb("#b3b3b3") }),
                 Row(2, new ScrollView { Content = new Editor { Text = report, IsReadOnly = true, FontSize = 11, FontFamily = "monospace", TextColor = Color.FromArgb("#e0e0e0"), BackgroundColor = Color.FromArgb("#1e1e1e"), AutoSize = EditorAutoSizeOption.TextChanges } }),
                 Row(3, buttons),
@@ -126,7 +126,7 @@ public sealed class CrashPage : ContentPage
 /// <summary>Application de secours quand <see cref="MauiProgram.CreateMauiApp"/> lui-même échoue.</summary>
 public sealed class CrashApp(CrashReport report) : Application
 {
-    protected override Window CreateWindow(IActivationState? activationState) => new(new CrashPage(report.Text, null)) { Title = "Localify" };
+    protected override Window CreateWindow(IActivationState? activationState) => new(new CrashPage(report.Text, null)) { Title = "SonNuage" };
 }
 
 public sealed record CrashReport(string Text);

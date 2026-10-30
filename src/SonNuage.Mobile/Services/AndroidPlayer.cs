@@ -2,12 +2,12 @@ using Android.Content;
 using Android.Runtime;
 using AndroidX.Media3.Common;
 using AndroidX.Media3.Session;
-using Localify.Contracts;
-using Localify.Mobile.Playback;
-using Localify.UI.Services;
-using IPlayer = Localify.UI.Services.IPlayer;
+using SonNuage.Contracts;
+using SonNuage.Mobile.Playback;
+using SonNuage.UI.Services;
+using IPlayer = SonNuage.UI.Services.IPlayer;
 
-namespace Localify.Mobile.Services;
+namespace SonNuage.Mobile.Services;
 
 /// <summary>
 /// Lecteur de l'interface Blazor sur Android : simple télécommande (MediaController) du <see cref="PlaybackService"/>.

@@ -11,11 +11,11 @@ using AndroidX.Media3.ExoPlayer.Source;
 using AndroidX.Media3.Extractor;
 using AndroidX.Media3.Session;
 using Google.Common.Util.Concurrent;
-using Localify.Contracts;
-using Localify.UI.Services;
+using SonNuage.Contracts;
+using SonNuage.UI.Services;
 using static AndroidX.Media3.Session.MediaLibraryService;
 
-namespace Localify.Mobile.Playback;
+namespace SonNuage.Mobile.Playback;
 
 /// <summary>
 /// Service de lecture natif : ExoPlayer + MediaLibrarySession. Il porte la notification, les contrôles écran verrouillé
@@ -55,7 +55,7 @@ public sealed class PlaybackService : MediaLibraryService
         var cache = Cache(this);
 
         var http = new DefaultHttpDataSource.Factory()
-            .SetUserAgent("Localify-Android")!
+            .SetUserAgent("SonNuage-Android")!
             .SetConnectTimeoutMs(15_000)!
             .SetReadTimeoutMs(30_000)!
             .SetAllowCrossProtocolRedirects(true)!;

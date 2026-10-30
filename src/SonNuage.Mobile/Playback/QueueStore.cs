@@ -1,8 +1,8 @@
 using System.Text.Json;
 using AndroidX.Media3.Common;
-using Localify.UI.Services;
+using SonNuage.UI.Services;
 
-namespace Localify.Mobile.Playback;
+namespace SonNuage.Mobile.Playback;
 
 /// <summary>
 /// Sauvegarde de la file pour la reprise (bouton lecture d'Android Auto, redémarrage de l'appli).
@@ -10,7 +10,7 @@ namespace Localify.Mobile.Playback;
 /// </summary>
 public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiClient api, LibraryBrowser browser)
 {
-    private const string BaseKey = "localify.queue";
+    private const string BaseKey = "sonnuage.queue";
 
     public sealed record Saved(List<Guid> Ids, int Index, long PositionMs, int RepeatMode);
 

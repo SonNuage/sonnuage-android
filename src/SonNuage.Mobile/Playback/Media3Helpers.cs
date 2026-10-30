@@ -3,16 +3,16 @@ using Android.OS;
 using AndroidX.Media3.Common;
 using Google.Common.Util.Concurrent;
 using Java.Util.Concurrent;
-using Localify.Contracts;
-using Localify.UI.Services;
+using SonNuage.Contracts;
+using SonNuage.UI.Services;
 
-namespace Localify.Mobile.Playback;
+namespace SonNuage.Mobile.Playback;
 
 /// <summary>Conversion TrackDto ⇄ MediaItem. La piste complète voyage en JSON dans les extras des métadonnées.</summary>
 public static class TrackItems
 {
-    public const string Scheme = "localify";
-    private const string TrackExtra = "localify.track";
+    public const string Scheme = "sonnuage";
+    private const string TrackExtra = "sonnuage.track";
 
     public static MediaItem From(TrackDto track, string? artworkUrl)
     {

@@ -1,11 +1,11 @@
-using Localify.UI.Services;
+using SonNuage.UI.Services;
 
-namespace Localify.Mobile.Services;
+namespace SonNuage.Mobile.Services;
 
 /// <summary>Preferences pour les réglages, SecureStorage (Keystore Android) pour la session et ses jetons.</summary>
 public sealed class MobileStore : IKeyValueStore
 {
-    private const string SecurePrefix = "localify.session";
+    private const string SecurePrefix = "sonnuage.session";
 
     public async Task<string?> GetAsync(string key)
     {
@@ -19,7 +19,7 @@ public sealed class MobileStore : IKeyValueStore
             // Clé Keystore invalidée (sauvegarde restaurée sur un autre appareil ou après réinstallation, changement de
             // verrouillage) : le fichier chiffré est illisible. Le nettoyage peut lui-même échouer : on repart de zéro
             // sans jamais laisser l'exception remonter (elle tuait l'appli au démarrage).
-            Android.Util.Log.Warn("Localify", $"SecureStorage illisible, réinitialisé : {ex}");
+            Android.Util.Log.Warn("SonNuage", $"SecureStorage illisible, réinitialisé : {ex}");
             try
             {
                 SecureStorage.Default.Remove(key);
@@ -48,7 +48,7 @@ public sealed class MobileStore : IKeyValueStore
         catch (Exception ex)
         {
             // Même cause que ci-dessus : on vide le stockage sécurisé et on réessaie une fois.
-            Android.Util.Log.Warn("Localify", $"SecureStorage illisible, réinitialisé : {ex}");
+            Android.Util.Log.Warn("SonNuage", $"SecureStorage illisible, réinitialisé : {ex}");
             try { SecureStorage.Default.RemoveAll(); } catch (Exception) { }
             if (value is not null) await SecureStorage.Default.SetAsync(key, value);
         }

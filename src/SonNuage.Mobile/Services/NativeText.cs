@@ -1,7 +1,7 @@
-using Localify.Contracts.Localization;
-using Localify.UI.Services;
+using SonNuage.Contracts.Localization;
+using SonNuage.UI.Services;
 
-namespace Localify.Mobile.Services;
+namespace SonNuage.Mobile.Services;
 
 /// <summary>
 /// Textes de la partie native (Android Auto, lecture, écran de plantage), hors Blazor : mêmes fichiers de langue,

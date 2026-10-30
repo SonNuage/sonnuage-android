@@ -1,10 +1,10 @@
-using Localify.Mobile.Playback;
-using Localify.Mobile.Services;
-using Localify.UI;
-using Localify.UI.Services;
+using SonNuage.Mobile.Playback;
+using SonNuage.Mobile.Services;
+using SonNuage.UI;
+using SonNuage.UI.Services;
 using Microsoft.Extensions.Logging;
 
-namespace Localify.Mobile;
+namespace SonNuage.Mobile;
 
 public static class MauiProgram
 {
@@ -25,7 +25,7 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPlayer>(sp => sp.GetRequiredService<AndroidPlayer>());
         builder.Services.AddSingleton<LibraryBrowser>();
         builder.Services.AddSingleton<QueueStore>();
-        builder.Services.AddLocalifyUi(multiAccount: true);
+        builder.Services.AddSonNuageUi(multiAccount: true);
 
         var app = builder.Build();
         // Le service de lecture peut démarrer seul (Android Auto) avant toute interface : comptes (migration comprise)
