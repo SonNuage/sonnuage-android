@@ -60,3 +60,10 @@ obligerait à désinstaller l'application avant de mettre à jour. Un nouveau ke
 ```bash
 keytool -genkeypair -v -keystore sonnuage.keystore -alias sonnuage -keyalg RSA -keysize 4096 -validity 10000
 ```
+
+### GitHub Actions
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) produit le même APK signé sur GitHub. Il extrait le dépôt
+`sonnuage` du même propriétaire à côté de celui-ci et compile contre ses sources, sans registre NuGet. Secrets à
+définir : les quatre variables de signature ci-dessus, plus `SONNUAGE_REPO_TOKEN` (jeton en lecture) si le dépôt
+`sonnuage` est privé. Sur un tag `vX.Y.Z`, l'APK est joint à une release GitHub.
