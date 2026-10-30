@@ -83,7 +83,7 @@ public sealed class CrashPage : ContentPage
     public CrashPage(string report, Func<Page>? next)
     {
         BackgroundColor = Color.FromArgb("#121212");
-        var copy = new Button { Text = NativeText.Get("crash.copy", "Copier le rapport"), BackgroundColor = Color.FromArgb("#1db954"), TextColor = Colors.Black };
+        var copy = new Button { Text = NativeText.Get("crash.copy", "Copier le rapport"), BackgroundColor = Color.FromArgb("#ffd166"), TextColor = Color.FromArgb("#141a33") };
         copy.Clicked += async (_, _) =>
         {
             await Clipboard.Default.SetTextAsync(report);
