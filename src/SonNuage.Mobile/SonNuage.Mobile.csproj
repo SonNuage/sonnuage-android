@@ -16,6 +16,9 @@
     <SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>
 
     <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <!-- Téléphones 64 bits ARM seulement : un build et un APK bien plus légers que les quatre architectures par
+         défaut. Pour un émulateur x86_64, ajouter android-x64. -->
+    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
     <!-- Les DTO sont (dé)sérialisés par réflexion : on ne rogne que le framework. -->
     <TrimMode>partial</TrimMode>
   </PropertyGroup>

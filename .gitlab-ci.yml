@@ -14,15 +14,20 @@
 # Elles portent la clé qui signait les APK du monodépôt : les nouveaux APK s'installent par-dessus les anciens.
 # Sans elles, le build échoue (une autre clé imposerait de désinstaller l'appli).
 #
-# Les jobs Docker utilisent docker-in-docker : le runner doit être en mode privileged.
+# Rapidité : paquets NuGet dans /nuget, un dossier de la machine monté par le runner (ni zip ni téléversement),
+# images publiques téléchargées une seule fois (pull_policy if-not-present du runner).
+# Le job android-sdk-image utilise docker-in-docker : le runner doit être en mode privileged.
 
 stages: [prepare, build, release]
 
 variables:
   DOTNET_CLI_TELEMETRY_OPTOUT: "1"
   DOTNET_NOLOGO: "1"
-  NUGET_PACKAGES: $CI_PROJECT_DIR/.nuget
+  NUGET_PACKAGES: /nuget
   ANDROID_SDK_IMAGE: $CI_REGISTRY_IMAGE/android-sdk:latest
+  GIT_DEPTH: "10"
+  FF_USE_FASTZIP: "true"
+  ARTIFACT_COMPRESSION_LEVEL: fastest
 
 workflow:
   rules:
@@ -57,13 +62,13 @@ android-sdk-image:
 
 android-apk:
   stage: build
-  image: $ANDROID_SDK_IMAGE
+  # Toujours vérifiée auprès du registre : latest peut avoir été reconstruite.
+  image:
+    name: $ANDROID_SDK_IMAGE
+    pull_policy: always
   needs:
     - job: android-sdk-image
       optional: true
-  cache:
-    key: nuget-android
-    paths: [.nuget/]
   script:
     - *version
     - |
