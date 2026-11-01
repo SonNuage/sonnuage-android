@@ -1,6 +1,6 @@
 # SonNuage Android
 
-Application Android de [SonNuage](https://git.pmjb.org/pmj.bailly/sonnuage), serveur de musique auto-hébergé :
+Application Android de [SonNuage](https://git.pmjb.org/sonnuage/sonnuage), serveur de musique auto-hébergé :
 .NET MAUI Blazor Hybrid (mêmes pages que le client web) et service de lecture Media3 (notification, Android Auto).
 
 | Dossier | Rôle |
@@ -9,7 +9,7 @@ Application Android de [SonNuage](https://git.pmjb.org/pmj.bailly/sonnuage), ser
 | `build/` | Image de build (SDK Android + workload MAUI) et script d'APK sans Android Studio |
 
 Les pages et composants viennent de la bibliothèque `SonNuage.UI` du dépôt
-[sonnuage](https://git.pmjb.org/pmj.bailly/sonnuage) :
+[sonnuage](https://git.pmjb.org/sonnuage/sonnuage) :
 
 - **en CI** : paquet NuGet publié par la CI de `sonnuage` (version dans `Directory.Packages.props`)
 - **en développement** : si `sonnuage` est cloné à côté de ce dépôt (`../sonnuage`), ses sources sont utilisées
@@ -50,8 +50,8 @@ de la CI (autre clé), il faut d'abord désinstaller l'appli.
 ## CI/CD GitLab
 
 [.gitlab-ci.yml](.gitlab-ci.yml) : image de build (quand sa recette change) → APK signé en artefact
-(`dist/sonnuage-X.Y.Z.apk`, signature vérifiée par `apksigner`) → sur tag `vX.Y.Z`, APK dans le registre de
-paquets et release GitLab.
+(`dist/sonnuage-X.Y.Z.apk`, signature vérifiée par `apksigner`) → sur `main`, semantic-release crée le tag `vX.Y.Z`
+et sa release, à laquelle le pipeline du tag joint l'APK (registre de paquets génériques).
 
 La signature utilise les variables masquées `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
 `ANDROID_KEY_ALIAS` et `ANDROID_KEY_PASSWORD`. Elles portent la clé qui signait déjà les APK : une autre clé
@@ -61,9 +61,27 @@ obligerait à désinstaller l'application avant de mettre à jour. Un nouveau ke
 keytool -genkeypair -v -keystore sonnuage.keystore -alias sonnuage -keyalg RSA -keysize 4096 -validity 10000
 ```
 
+### Versions
+
+Les versions sont publiées par [semantic-release](https://semantic-release.gitbook.io/) ([.releaserc.json](.releaserc.json)),
+d'après les messages de commit au format [Conventional Commits](https://www.conventionalcommits.org/fr/) :
+`fix: …` donne un correctif (1.0.1), `feat: …` une version mineure (1.1.0), `feat!: …` ou un pied de page
+`BREAKING CHANGE:` une version majeure (2.0.0). `docs`, `chore`, `ci`, `refactor`, `test` ne publient rien.
+Sur `main`, le job `semantic-release` crée le tag `vX.Y.Z` et la release GitLab avec ses notes. Le pipeline du
+tag publie ensuite la version. Il utilise `GITLAB_TOKEN`, jeton du groupe `sonnuage` (variable masquée et protégée,
+tags `v*` protégés).
+
 ### GitHub Actions
 
 [.github/workflows/ci.yml](.github/workflows/ci.yml) produit le même APK signé sur GitHub. Il extrait le dépôt
 `sonnuage` du même propriétaire à côté de celui-ci et compile contre ses sources, sans registre NuGet. Secrets à
 définir : les quatre variables de signature ci-dessus, plus `SONNUAGE_REPO_TOKEN` (jeton en lecture) si le dépôt
 `sonnuage` est privé. Sur un tag `vX.Y.Z`, l'APK est joint à une release GitHub.
+
+## Licence
+
+SonNuage est un logiciel libre sous licence [GNU AGPL v3.0 ou ultérieure](LICENSE) : chacun peut l'utiliser,
+l'étudier, le modifier et le redistribuer. Une version modifiée, y compris proposée comme service en ligne, doit
+publier son code source sous la même licence.
+
+Copyright © 2026 pmj.bailly et les contributeurs de SonNuage.

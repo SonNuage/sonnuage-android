@@ -3,7 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Bibliothèques partagées, publiées par la CI du dépôt sonnuage (registre NuGet du projet pmj.bailly/sonnuage).
+    <!-- Bibliothèques partagées, publiées par la CI du dépôt sonnuage (registre NuGet du projet sonnuage/sonnuage).
          À monter avec le serveur : une version X.Y.Z sur tag, 0.1.0-ci.N sur main. -->
     <PackageVersion Include="SonNuage.UI" Version="0.1.0-ci.25" />
     <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.120" />

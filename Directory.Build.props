@@ -6,6 +6,8 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <Version>0.1.0</Version>
     <Authors>pmj.bailly</Authors>
+    <Copyright>Copyright © 2026 pmj.bailly et les contributeurs de SonNuage</Copyright>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <!-- Dépôt sonnuage (serveur + client web) cloné à côté de celui-ci : ses sources remplacent le paquet SonNuage.UI. -->
     <SonNuageRepo Condition="'$(SonNuageRepo)' == ''">$(MSBuildThisFileDirectory)..\sonnuage</SonNuageRepo>
     <SonNuageUiProject>$(SonNuageRepo)\src\SonNuage.UI\SonNuage.UI.csproj</SonNuageUiProject>
