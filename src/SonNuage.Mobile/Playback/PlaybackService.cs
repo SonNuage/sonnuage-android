@@ -227,7 +227,7 @@ public sealed class PlaybackService : MediaLibraryService
                 if (parentId == BrowseIds.ResumeRoot)
                 {
                     var saved = await queue.LoadAsync();
-                    IList<MediaItem> resume = saved is { } s ? [browser.ResumeItem(s.Items[s.Index])] : [];
+                    IList<MediaItem> resume = saved is { } s ? [LibraryBrowser.ResumeItem(s.Items[s.Index])] : [];
                     return LibraryResult.OfItemList(resume, @params)!;
                 }
                 return LibraryResult.OfItemList(Page(await browser.ChildrenAsync(parentId ?? BrowseIds.Root), page, pageSize), @params)!;
