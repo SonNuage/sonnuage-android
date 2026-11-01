@@ -107,4 +107,4 @@ jobs:
           path: dist
       - env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "$GITHUB_REF_NAME" dist/*.apk --repo "$GITHUB_REPOSITORY" --title "SonNuage Android ${{ needs.apk.outputs.version }}"
+        run: gh release create "$GITHUB_REF_NAME" dist/*.apk --repo "$GITHUB_REPOSITORY" --title "SonNuage Android ${{ needs.apk.outputs.version }}" --generate-notes
