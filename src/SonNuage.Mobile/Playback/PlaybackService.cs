@@ -86,12 +86,14 @@ public sealed class PlaybackService : MediaLibraryService
         var player = new ShufflingPlayer(exo);
 
         _prefetcher = new Prefetcher(cached, resolver, settings);
-        player.AddListener(new PlayerEvents(player, _prefetcher, queue, () => _queueKey, api));
 
         var activity = PendingIntent.GetActivity(this, 0, new Intent(this, typeof(MainActivity)), PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         _session = new MediaLibrarySession.Builder(this, player, new LibraryCallback(browser, queue))
             .SetSessionActivity(activity!)!
             .Build();
+        // Après la session : à chaque changement de piste, elle publie le nouveau titre (notification, Android Auto)
+        // avant nos traitements.
+        player.AddListener(new PlayerEvents(player, _prefetcher, queue, () => _queueKey, api));
         accounts.ActiveChanged += OnAccountChanged;
     }
 
@@ -158,11 +160,14 @@ public sealed class PlaybackService : MediaLibraryService
 
         public void OnTimelineChanged(Timeline? timeline, int reason) => prefetcher.Schedule(player);
 
-        public void OnMediaItemTransition(MediaItem? mediaItem, int reason)
+        // Remis à la boucle suivante du thread : la session finit de publier le nouveau titre avant.
+        private readonly Android.OS.Handler _handler = new(Android.OS.Looper.MainLooper!);
+
+        public void OnMediaItemTransition(MediaItem? mediaItem, int reason) => _handler.Post(() =>
         {
             prefetcher.Schedule(player);
             queue.Save(player, queueKey());
-        }
+        });
 
         public void OnRepeatModeChanged(int repeatMode) => prefetcher.Schedule(player);
 
@@ -208,14 +213,25 @@ public sealed class PlaybackService : MediaLibraryService
         private const int ErrorNotSupported = -6;
         private readonly Dictionary<string, IList<MediaItem>> _searches = [];
 
+        // Android Auto et le système demandent une racine « récents » (isRecent) pour proposer l'appli en suggestion et
+        // reprendre la lecture : elle contient la piste de la file sauvegardée.
         public IListenableFuture? OnGetLibraryRoot(MediaLibrarySession? session, MediaSession.ControllerInfo? browserInfo, LibraryParams? @params) =>
-            FutureExtensions.Completed(LibraryResult.OfItem(browser.RootItem(), @params));
+            FutureExtensions.Completed(LibraryResult.OfItem(@params?.IsRecent == true ? browser.ResumeRootItem() : browser.RootItem(), @params));
 
         public IListenableFuture? OnGetItem(MediaLibrarySession? session, MediaSession.ControllerInfo? browserInfo, string? mediaId) =>
             FutureExtensions.Completed(LibraryResult.OfError(ErrorNotSupported));
 
         public IListenableFuture? OnGetChildren(MediaLibrarySession? session, MediaSession.ControllerInfo? browserInfo, string? parentId, int page, int pageSize, LibraryParams? @params) =>
-            FutureExtensions.FromTask(async () => LibraryResult.OfItemList(Page(await browser.ChildrenAsync(parentId ?? BrowseIds.Root), page, pageSize), @params)!);
+            FutureExtensions.FromTask(async () =>
+            {
+                if (parentId == BrowseIds.ResumeRoot)
+                {
+                    var saved = await queue.LoadAsync();
+                    IList<MediaItem> resume = saved is { } s ? [browser.ResumeItem(s.Items[s.Index])] : [];
+                    return LibraryResult.OfItemList(resume, @params)!;
+                }
+                return LibraryResult.OfItemList(Page(await browser.ChildrenAsync(parentId ?? BrowseIds.Root), page, pageSize), @params)!;
+            });
 
         public IListenableFuture? OnSearch(MediaLibrarySession? session, MediaSession.ControllerInfo? browserInfo, string? query, LibraryParams? @params) =>
             FutureExtensions.FromTask(async () =>
@@ -238,6 +254,11 @@ public sealed class PlaybackService : MediaLibraryService
         public IListenableFuture? OnSetMediaItems(MediaSession? mediaSession, MediaSession.ControllerInfo? controller, IList<MediaItem>? mediaItems, int startIndex, long startPositionMs) =>
             FutureExtensions.FromTask(async () =>
             {
+                // Suggestion « reprendre » : toute la file sauvegardée, là où elle s'était arrêtée.
+                if (mediaItems is [{ MediaId: BrowseIds.Resume }] && await queue.LoadAsync() is { } saved)
+                {
+                    return new MediaSession.MediaItemsWithStartPosition(saved.Items, saved.Index, saved.PositionMs);
+                }
                 var (items, index) = await browser.ResolveAsync(mediaItems ?? [], startIndex);
                 return new MediaSession.MediaItemsWithStartPosition(items, index, startPositionMs);
             });

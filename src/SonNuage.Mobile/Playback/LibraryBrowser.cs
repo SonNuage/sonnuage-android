@@ -18,6 +18,8 @@ public static class BrowseIds
     public const string Recent = "recent";
     public const string Favorites = "favorites";
     public const string ShuffleAll = "shuffle";
+    public const string ResumeRoot = "resume-root";
+    public const string Resume = "resume";
 
     public static string Track(Guid id) => $"track:{id:N}";
     public static string Album(Guid id) => $"album:{id:N}";
@@ -44,6 +46,11 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
     }
 
     public MediaItem RootItem() => Folder(BrowseIds.Root, "SonNuage", MediaMetadata.MediaTypeFolderMixed);
+
+    public MediaItem ResumeRootItem() => Folder(BrowseIds.ResumeRoot, "SonNuage", MediaMetadata.MediaTypeFolderMixed);
+
+    /// <summary>La piste de la file sauvegardée, sous l'identifiant qui relance toute la file (voir OnSetMediaItems).</summary>
+    public static MediaItem ResumeItem(MediaItem track) => track.BuildUpon()!.SetMediaId(BrowseIds.Resume)!.Build()!;
 
     public async Task<IList<MediaItem>> ChildrenAsync(string parentId)
     {

@@ -10,6 +10,13 @@
         android:networkSecurityConfig="@xml/network_security_config">
         <!-- Déclare l'app comme source média pour Android Auto. -->
         <meta-data android:name="com.google.android.gms.car.application" android:resource="@xml/automotive_app_desc" />
+        <!-- Bouton lecture (casque, voiture, Android Auto à la connexion) alors que l'appli est fermée : Media3 démarre
+             le service de lecture et reprend la file sauvegardée (OnPlaybackResumption). -->
+        <receiver android:name="androidx.media3.session.MediaButtonReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </receiver>
     </application>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
