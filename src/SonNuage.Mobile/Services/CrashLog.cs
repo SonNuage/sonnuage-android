@@ -124,7 +124,7 @@ public static class CrashLog
             }
         }
         Add("ABI", () => string.Join(", ", Android.OS.Build.SupportedAbis ?? []));
-        Add("Ouverte depuis", () => TimeSpan.FromMilliseconds(Android.OS.SystemClock.ElapsedRealtime() - Android.OS.Process.StartElapsedRealtime()).ToString(@"d\.hh\:mm\:ss"));
+        Add("Ouverte depuis", () => TimeSpan.FromMilliseconds(Android.OS.SystemClock.ElapsedRealtime() - Android.OS.Process.StartElapsedRealtime).ToString(@"d\.hh\:mm\:ss"));
         Add("Thread", () => $"{Environment.CurrentManagedThreadId} {Thread.CurrentThread.Name}".Trim());
         Add("Mémoire .NET", () => $"{GC.GetTotalMemory(false) / 1048576} Mo");
         Add("Mémoire Java", () =>
