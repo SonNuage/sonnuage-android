@@ -1,15 +1,21 @@
 using SonNuage.Mobile.Services;
+using SonNuage.UI.Services;
 using Microsoft.AspNetCore.Components.WebView.Maui;
 
 namespace SonNuage.Mobile;
 
-public sealed class App : Application
+public sealed class App(ApiClient api) : Application
 {
     protected override Window CreateWindow(IActivationState? activationState)
     {
-        // Plantage lors de la session précédente : on le montre avant de relancer l'interface.
-        Page page = CrashLog.ReadPending() is { } report ? new CrashPage(report, () => new MainPage()) : new MainPage();
-        return new Window(page) { Title = "SonNuage" };
+        // Plantage lors de la session précédente : on le montre, et propose de l'envoyer, avant de relancer l'interface.
+        var pending = CrashLog.ReadPending();
+        Page page = pending.Count > 0 ? new CrashPage(pending, () => new MainPage(), api.SendCrashReportAsync) : new MainPage();
+        var window = new Window(page) { Title = "SonNuage" };
+        window.Resumed += (_, _) => CrashLog.Breadcrumbs.Add("appli au premier plan");
+        window.Stopped += (_, _) => CrashLog.Breadcrumbs.Add("appli en arrière-plan");
+        window.Destroying += (_, _) => CrashLog.Breadcrumbs.Add("fenêtre fermée");
+        return window;
     }
 }
 

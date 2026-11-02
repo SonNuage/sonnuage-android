@@ -23,7 +23,7 @@ public sealed class MainApplication(IntPtr handle, JniHandleOwnership ownership)
         catch (Exception ex)
         {
             CrashLog.Write("Démarrage", ex);
-            return MauiProgram.CreateCrashApp(CrashLog.ReadPending() ?? ex.ToString());
+            return MauiProgram.CreateCrashApp();
         }
     }
 }

@@ -18,6 +18,8 @@ public static class MauiProgram
         builder.Services.AddBlazorWebViewDeveloperTools();
 #endif
 
+        // Le journal de plantage et l'interface partagent les mêmes dernières actions.
+        builder.Services.AddSingleton(CrashLog.Breadcrumbs);
         builder.Services.AddSingleton<IKeyValueStore, MobileStore>();
         builder.Services.AddSingleton<IServerEndpoint, AccountEndpoint>();
         builder.Services.AddSingleton<IPlatformInfo, MobilePlatform>();
@@ -42,11 +44,10 @@ public static class MauiProgram
     }
 
     /// <summary>Application minimale qui affiche le rapport quand le démarrage normal a échoué.</summary>
-    public static MauiApp CreateCrashApp(string report)
+    public static MauiApp CreateCrashApp()
     {
         var builder = MauiApp.CreateBuilder();
         builder.UseMauiApp<CrashApp>();
-        builder.Services.AddSingleton(new CrashReport(report));
         return builder.Build();
     }
 }

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Android.Content;
 using Android.Runtime;
 using AndroidX.Media3.Common;
@@ -14,7 +15,7 @@ namespace SonNuage.Mobile.Services;
 /// La file vit dans le service, ce qui la partage avec la notification et Android Auto. L'état exposé ici est
 /// relu depuis le contrôleur à chaque événement. Le MediaController n'est utilisable que depuis le thread principal.
 /// </summary>
-public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settings, LibraryBrowser browser) : IPlayer, IRestorablePlayer
+public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settings, LibraryBrowser browser, Breadcrumbs crumbs) : IPlayer, IRestorablePlayer
 {
     private MediaController? _controller;
     private Task<MediaController>? _connecting;
@@ -101,20 +102,23 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
         StateChanged?.Invoke();
     }
 
-    private Task OnMain(Action<MediaController> action) => OnMain(c =>
+    private Task OnMain(Action<MediaController> action, [CallerMemberName] string command = "") => OnMain(c =>
     {
         action(c);
         return Task.CompletedTask;
-    });
+    }, command);
 
-    private Task OnMain(Func<MediaController, Task> action) => MainThread.InvokeOnMainThreadAsync(async () =>
+    // Chaque commande rejoint les dernières actions jointes à un éventuel rapport de plantage.
+    private Task OnMain(Func<MediaController, Task> action, [CallerMemberName] string command = "") => MainThread.InvokeOnMainThreadAsync(async () =>
     {
+        crumbs.Add($"lecteur : {command}");
         try
         {
             await action(await ControllerAsync());
         }
         catch (Exception ex) when (ex is Java.Lang.Exception or InvalidOperationException)
         {
+            crumbs.Add($"lecteur : {command} en échec ({ex.GetType().Name} : {ex.Message})");
             _state = _state with { Error = ex.Message };
             StateChanged?.Invoke();
         }
