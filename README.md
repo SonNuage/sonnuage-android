@@ -1,6 +1,6 @@
 # SonNuage Android
 
-Application Android de [SonNuage](https://git.pmjb.org/sonnuage/sonnuage), serveur de musique auto-hébergé :
+Application Android de [SonNuage](https://github.com/SonNuage/sonnuage), serveur de musique auto-hébergé :
 .NET MAUI Blazor Hybrid (mêmes pages que le client web) et service de lecture Media3 (notification, Android Auto).
 
 | Dossier | Rôle |
@@ -9,7 +9,7 @@ Application Android de [SonNuage](https://git.pmjb.org/sonnuage/sonnuage), serve
 | `build/` | Image de build (SDK Android + workload MAUI) et script d'APK sans Android Studio |
 
 Les pages et composants viennent de la bibliothèque `SonNuage.UI` du dépôt
-[sonnuage](https://git.pmjb.org/sonnuage/sonnuage) :
+[sonnuage](https://github.com/SonNuage/sonnuage) :
 
 - **en CI** : paquet NuGet publié par la CI de `sonnuage` (version dans `Directory.Packages.props`)
 - **en développement** : si `sonnuage` est cloné à côté de ce dépôt (`../sonnuage`), ses sources sont utilisées
