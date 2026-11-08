@@ -56,6 +56,10 @@ android-sdk-image:
   stage: prepare
   rules:
     - if: $BUILD_ANDROID_SDK == "1"
+    # Jamais sur un tag : GitLab y considère tous les fichiers comme modifiés, l'image était donc reconstruite à
+    # chaque version (dizaine de minutes, et une copie de plus sur le disque du runner). main l'a déjà construite.
+    - if: $CI_COMMIT_TAG
+      when: never
     # Sur push seulement : hors push (pipeline manuelle, planifiée), changes est toujours vrai.
     - if: $CI_PIPELINE_SOURCE == "push"
       changes: [build/android-sdk.Dockerfile]
