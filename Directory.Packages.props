@@ -5,7 +5,7 @@
   <ItemGroup>
     <!-- Bibliothèques partagées, publiées par la CI du dépôt sonnuage (registre NuGet du projet sonnuage/sonnuage).
          À monter avec le serveur : une version X.Y.Z sur tag, 0.1.0-ci.N sur main. -->
-    <PackageVersion Include="SonNuage.UI" Version="1.3.0" />
+    <PackageVersion Include="SonNuage.UI" Version="1.4.0" />
     <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.120" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.120" />
     <PackageVersion Include="Xamarin.AndroidX.Media3.Session" Version="1.11.1" />
