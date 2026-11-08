@@ -26,12 +26,11 @@ public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiC
         if (key is null) return;
         // Identifiant lu dans le mediaId (« track:{id} ») : désérialiser chaque piste prenait un temps visible à chaque
         // changement de titre sur une longue file.
-        var ids = new List<Guid>(Math.Min(player.MediaItemCount, 500));
-        for (var i = 0; i < player.MediaItemCount && ids.Count < 500; i++)
-        {
-            if (BrowseIds.TrackId(player.GetMediaItemAt(i)?.MediaId) is { } id) ids.Add(id);
-        }
-        var saved = new Saved(ids, Math.Max(0, player.CurrentMediaItemIndex), Math.Max(0, player.CurrentPosition), player.RepeatMode);
+        var count = player.MediaItemCount;
+        var queue = new Guid?[count];
+        for (var i = 0; i < count; i++) queue[i] = BrowseIds.TrackId(player.GetMediaItemAt(i)?.MediaId);
+        var (ids, index) = QueueSnapshot.Take(queue, player.CurrentMediaItemIndex);
+        var saved = new Saved(ids, index, Math.Max(0, player.CurrentPosition), player.RepeatMode);
         _ = store.SetAsync(key, JsonSerializer.Serialize(saved, JsonDefaults.Options));
     }
 
