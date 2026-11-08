@@ -57,6 +57,10 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: sonnuage-android/global.json
+      # Règles pures du lecteur (fondu enchaîné, file, pré-chargement…), sans émulateur ni workload : comme sur GitLab.
+      - name: Tests
+        working-directory: sonnuage-android
+        run: dotnet test --project tests/SonNuage.Mobile.Tests
       - name: SDK Android et workload MAUI
         run: |
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
