@@ -167,7 +167,6 @@ public sealed class PlaybackService : MediaLibraryService
     {
         // Un seul appel de lecture infinie à la fois : deux changements de piste rapprochés ne doivent pas doubler l'ajout.
         private bool _extending;
-        private const double PlayThresholdSeconds = 30;
 
         public void OnTimelineChanged(Timeline? timeline, int reason) => prefetcher.Schedule(player);
 
@@ -254,13 +253,12 @@ public sealed class PlaybackService : MediaLibraryService
             if (playbackState == PlayerConst.StateEnded) Report(player.CurrentMediaItem, player.CurrentPosition / 1000.0, completed: true);
         }
 
-        /// <summary>Même règle que le web : une écoute compte au-delà de 30 s (ou de la moitié d'une piste courte).</summary>
+        /// <summary>Envoie l'écoute à l'historique si elle compte (<see cref="ListenRule"/>).</summary>
         private void Report(MediaItem? item, double seconds, bool completed)
         {
             // Pas de clé : la file est en cours de vidage pour un changement de compte, l'écoute n'est pas à imputer.
             if (queueKey() is null || TrackItems.ToTrack(item) is not { } track) return;
-            if (!completed && seconds < Math.Min(PlayThresholdSeconds, track.DurationSeconds * 0.5)) return;
-            var played = completed ? track.DurationSeconds : seconds;
+            if (ListenRule.Played(seconds, track.DurationSeconds, completed) is not { } played) return;
             _ = Task.Run(async () =>
             {
                 try
