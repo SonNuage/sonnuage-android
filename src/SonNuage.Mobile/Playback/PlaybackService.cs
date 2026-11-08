@@ -127,9 +127,7 @@ public sealed class PlaybackService : MediaLibraryService
         }
         var saved = await queue.LoadAsync();
         if (saved is null || _session?.Player is not { } current || current.MediaItemCount > 0) return;
-        current.RepeatMode = saved.Value.RepeatMode;
-        current.SetMediaItems(saved.Value.Items, saved.Value.Index, saved.Value.PositionMs);
-        current.Prepare();
+        saved.LoadInto(current);
     });
 
     public override MediaLibrarySession? OnGetSessionFromMediaLibraryService(MediaSession.ControllerInfo? controllerInfo) => _session;
@@ -297,7 +295,7 @@ public sealed class PlaybackService : MediaLibraryService
                 if (parentId == BrowseIds.ResumeRoot)
                 {
                     var saved = await queue.LoadAsync();
-                    IList<MediaItem> resume = saved is { } s ? [LibraryBrowser.ResumeItem(s.Items[s.Index])] : [];
+                    IList<MediaItem> resume = saved is null ? [] : [LibraryBrowser.ResumeItem(saved.Current)];
                     return LibraryResult.OfItemList(resume, @params)!;
                 }
                 return LibraryResult.OfItemList(Page(await browser.ChildrenAsync(parentId ?? BrowseIds.Root), page, pageSize), @params)!;
@@ -325,10 +323,7 @@ public sealed class PlaybackService : MediaLibraryService
             FutureExtensions.FromTask(async () =>
             {
                 // Suggestion « reprendre » : toute la file sauvegardée, là où elle s'était arrêtée.
-                if (mediaItems is [{ MediaId: BrowseIds.Resume }] && await queue.LoadAsync() is { } saved)
-                {
-                    return new MediaSession.MediaItemsWithStartPosition(saved.Items, saved.Index, saved.PositionMs);
-                }
+                if (mediaItems is [{ MediaId: BrowseIds.Resume }] && await queue.LoadAsync() is { } saved) return saved.StartPosition();
                 var (items, index) = await browser.ResolveAsync(mediaItems ?? [], startIndex);
                 return new MediaSession.MediaItemsWithStartPosition(items, index, startPositionMs);
             });
@@ -344,7 +339,7 @@ public sealed class PlaybackService : MediaLibraryService
             FutureExtensions.FromTask(async () =>
             {
                 var saved = await queue.LoadAsync() ?? throw new InvalidOperationException("Aucune file à reprendre.");
-                return new MediaSession.MediaItemsWithStartPosition(saved.Items, saved.Index, saved.PositionMs);
+                return saved.StartPosition();
             });
 
         private static List<MediaItem> Page(IList<MediaItem> items, int page, int pageSize) =>

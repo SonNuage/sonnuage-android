@@ -33,10 +33,7 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
     public Task RestoreAsync() => OnMain(async c =>
     {
         if (c.MediaItemCount > 0) return;
-        if (await queueStore.LoadAsync() is not { } saved) return;
-        c.RepeatMode = saved.RepeatMode;
-        c.SetMediaItems(saved.Items, saved.Index, saved.PositionMs);
-        c.Prepare();
+        if (await queueStore.LoadAsync() is { } saved) saved.LoadInto(c);
     });
 
     public Task PlayAsync(IReadOnlyList<TrackDto> tracks, int startIndex = 0, bool? shuffle = null) => OnMain(c =>

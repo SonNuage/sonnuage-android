@@ -1,5 +1,6 @@
 using System.Text.Json;
 using AndroidX.Media3.Common;
+using AndroidX.Media3.Session;
 using SonNuage.UI.Services;
 
 namespace SonNuage.Mobile.Playback;
@@ -13,6 +14,23 @@ public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiC
     private const string BaseKey = "sonnuage.queue";
 
     public sealed record Saved(List<Guid> Ids, int Index, long PositionMs, int RepeatMode);
+
+    /// <summary>File sauvegardée, pistes rechargées : prête à être rendue au lecteur.</summary>
+    public sealed record Restored(List<MediaItem> Items, int Index, long PositionMs, int RepeatMode)
+    {
+        public MediaItem Current => Items[Index];
+
+        /// <summary>Pour Media3 (reprise depuis Android Auto, le système ou la suggestion « reprendre »).</summary>
+        public MediaSession.MediaItemsWithStartPosition StartPosition() => new(Items, Index, PositionMs);
+
+        /// <summary>Charge la file dans le lecteur, là où elle s'était arrêtée, sans lancer la lecture.</summary>
+        public void LoadInto(Media3IPlayer player)
+        {
+            player.RepeatMode = RepeatMode;
+            player.SetMediaItems(Items, Index, PositionMs);
+            player.Prepare();
+        }
+    }
 
     /// <summary>Clé de la file du compte actif.</summary>
     public string CurrentKey => accounts.ScopedKey(BaseKey);
@@ -35,7 +53,7 @@ public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiC
     }
 
     /// <summary>File sauvegardée du compte actif, pistes rechargées depuis son serveur.</summary>
-    public async Task<(List<MediaItem> Items, int Index, long PositionMs, int RepeatMode)?> LoadAsync()
+    public async Task<Restored?> LoadAsync()
     {
         if (!await browser.EnsureSignedInAsync()) return null;
         var raw = await store.GetAsync(CurrentKey);
@@ -48,7 +66,7 @@ public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiC
             var tracks = await api.LookupTracksAsync(saved.Ids) ?? [];
             if (tracks.Count == 0) return null;
             var index = Math.Max(0, tracks.FindIndex(t => t.Id == current));
-            return (tracks.Select(browser.Item).ToList(), index, tracks[index].Id == current ? saved.PositionMs : 0, saved.RepeatMode);
+            return new Restored(tracks.Select(browser.Item).ToList(), index, tracks[index].Id == current ? saved.PositionMs : 0, saved.RepeatMode);
         }
         catch (Exception ex) when (ex is ApiException || ServerFailure.IsNetwork(ex))
         {
