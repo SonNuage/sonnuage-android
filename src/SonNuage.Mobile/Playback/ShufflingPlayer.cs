@@ -42,9 +42,7 @@ public sealed class ShufflingPlayer(Media3IPlayer player) : ForwardingPlayer(pla
         }
         var start = Math.Clamp(startIndex, 0, mediaItems.Count - 1);
         _original = mediaItems.ToList();
-        var rest = mediaItems.Where((_, i) => i != start).ToArray();
-        Random.Shared.Shuffle(rest);
-        base.SetMediaItems([mediaItems[start], .. rest], 0, startPositionMs);
+        base.SetMediaItems([mediaItems[start], .. ShuffleOrder.Others(_original, start, Random.Shared)], 0, startPositionMs);
     }
 
     private void Shuffle()
@@ -53,9 +51,7 @@ public sealed class ShufflingPlayer(Media3IPlayer player) : ForwardingPlayer(pla
         if (items.Count < 2) return;
         var current = Math.Max(0, CurrentMediaItemIndex);
         _original = items;
-        var rest = items.Where((_, i) => i != current).ToArray();
-        Random.Shared.Shuffle(rest);
-        ReplaceAround(current, [], rest);
+        ReplaceAround(current, [], ShuffleOrder.Others(items, current, Random.Shared));
     }
 
     private void Unshuffle()
@@ -65,18 +61,7 @@ public sealed class ShufflingPlayer(Media3IPlayer player) : ForwardingPlayer(pla
         var current = Math.Max(0, CurrentMediaItemIndex);
         if (items.Count < 2 || current >= items.Count) return;
 
-        // L'ordre d'origine, limité aux éléments encore présents (multi-ensemble : une piste peut figurer deux fois),
-        // suivi de ce qui a été ajouté pendant le shuffle.
-        var remaining = items.ToList();
-        var order = new List<MediaItem>(items.Count);
-        foreach (var item in _original)
-        {
-            var j = remaining.FindIndex(r => r.Equals(item));
-            if (j < 0) continue;
-            order.Add(remaining[j]);
-            remaining.RemoveAt(j);
-        }
-        order.AddRange(remaining);
+        var order = ShuffleOrder.Restore(_original, items, (a, b) => a.Equals(b));
         _original = null;
 
         var playing = items[current];
