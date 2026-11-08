@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\SonNuage.Mobile\Playback\CrossfadeTiming.cs" Link="Playback\CrossfadeTiming.cs" />
+    <Compile Include="..\..\src\SonNuage.Mobile\Playback\BrowseIds.cs" Link="Playback\BrowseIds.cs" />
   </ItemGroup>
 
   <ItemGroup>

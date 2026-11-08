@@ -5,35 +5,6 @@ using SonNuage.UI.Services;
 
 namespace SonNuage.Mobile.Playback;
 
-/// <summary>
-/// Identifiants de l'arborescence Android Auto. Une piste listée dans un contexte porte ce contexte
-/// (« track:{id}@album:{id} ») pour qu'un appui lance tout l'album à partir de cette piste.
-/// </summary>
-public static class BrowseIds
-{
-    public const string Root = "root";
-    public const string Playlists = "playlists";
-    public const string Albums = "albums";
-    public const string Artists = "artists";
-    public const string Recent = "recent";
-    public const string Favorites = "favorites";
-    public const string ShuffleAll = "shuffle";
-    public const string ResumeRoot = "resume-root";
-    public const string Resume = "resume";
-
-    public static string Track(Guid id) => $"track:{id:N}";
-    public static string Album(Guid id) => $"album:{id:N}";
-    public static string Artist(Guid id) => $"artist:{id:N}";
-    public static string Playlist(Guid id) => $"playlist:{id:N}";
-    public static string InContext(Guid trackId, string context) => $"{Track(trackId)}@{context}";
-
-    public static (string Kind, Guid Id) Parse(string id)
-    {
-        var colon = id.IndexOf(':');
-        return colon < 0 ? (id, Guid.Empty) : (id[..colon], Guid.TryParse(id[(colon + 1)..], out var g) ? g : Guid.Empty);
-    }
-}
-
 /// <summary>Arborescence de navigation Android Auto et résolution des identifiants en pistes à jouer.</summary>
 public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
 {
@@ -91,7 +62,7 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
                 return (page?.Items ?? []).Select(a => Container(BrowseIds.Artist(a.Id), a.Name, $"{a.AlbumCount} albums",
                     api.CoverUrl(a.CoverAlbumId, 300), MediaMetadata.MediaTypeArtist)).ToList();
             }
-            case "artist":
+            case BrowseIds.ArtistKind:
             {
                 var artist = await api.ArtistAsync(id);
                 if (artist is null) return [];
@@ -135,14 +106,12 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
                 if (tracks.Count == 0 && found?.Albums.FirstOrDefault() is { } album) tracks = await TracksAsync(BrowseIds.Album(album.Id));
                 return (tracks.Select(Item).ToList(), 0);
             }
-            var at = mediaId.IndexOf('@');
-            if (at > 0)
+            if (BrowseIds.SplitContext(mediaId) is { } inContext)
             {
-                var context = await TracksAsync(mediaId[(at + 1)..]);
-                var trackId = BrowseIds.Parse(mediaId[..at]).Id;
-                return (context.Select(Item).ToList(), Math.Max(0, context.FindIndex(t => t.Id == trackId)));
+                var context = await TracksAsync(inContext.Context);
+                return (context.Select(Item).ToList(), Math.Max(0, context.FindIndex(t => t.Id == inContext.TrackId)));
             }
-            if (!mediaId.StartsWith("track:", StringComparison.Ordinal))
+            if (!mediaId.StartsWith($"{BrowseIds.TrackKind}:", StringComparison.Ordinal))
             {
                 var tracks = await TracksAsync(mediaId);
                 return (tracks.Select(Item).ToList(), 0);
@@ -154,7 +123,7 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
         foreach (var item in requested)
         {
             if (TrackItems.ToTrack(item) is { } track) resolved.Add(Item(track));
-            else if (BrowseIds.Parse(item.MediaId ?? "") is ("track", var id)) missing.Add(id);
+            else if (BrowseIds.Parse(item.MediaId ?? "") is (BrowseIds.TrackKind, var id)) missing.Add(id);
         }
         if (missing.Count > 0)
         {
@@ -170,9 +139,9 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
         var (kind, id) = BrowseIds.Parse(contextId);
         return kind switch
         {
-            "album" => (await api.AlbumAsync(id))?.Tracks.ToList() ?? [],
-            "artist" => await api.ArtistTracksAsync(id) ?? [],
-            "playlist" => (await api.PlaylistAsync(id))?.Entries.Select(e => e.Track).ToList() ?? [],
+            BrowseIds.AlbumKind => (await api.AlbumAsync(id))?.Tracks.ToList() ?? [],
+            BrowseIds.ArtistKind => await api.ArtistTracksAsync(id) ?? [],
+            BrowseIds.PlaylistKind => (await api.PlaylistAsync(id))?.Entries.Select(e => e.Track).ToList() ?? [],
             BrowseIds.Favorites => await api.FavoritesAsync() ?? [],
             BrowseIds.Recent => await api.RecentAsync(50) ?? [],
             BrowseIds.ShuffleAll => await api.RandomTracksAsync(100) ?? [],

@@ -29,7 +29,7 @@ public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiC
         var ids = new List<Guid>(Math.Min(player.MediaItemCount, 500));
         for (var i = 0; i < player.MediaItemCount && ids.Count < 500; i++)
         {
-            if (BrowseIds.Parse(player.GetMediaItemAt(i)?.MediaId ?? "") is ("track", var id) && id != Guid.Empty) ids.Add(id);
+            if (BrowseIds.TrackId(player.GetMediaItemAt(i)?.MediaId) is { } id) ids.Add(id);
         }
         var saved = new Saved(ids, Math.Max(0, player.CurrentMediaItemIndex), Math.Max(0, player.CurrentPosition), player.RepeatMode);
         _ = store.SetAsync(key, JsonSerializer.Serialize(saved, JsonDefaults.Options));

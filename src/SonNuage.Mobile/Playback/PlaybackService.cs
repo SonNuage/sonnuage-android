@@ -121,7 +121,7 @@ public sealed class PlaybackService : MediaLibraryService
         player.Stop();
         player.ClearMediaItems();
         _queueKey = queue.CurrentKey;
-        foreach (var id in new[] { BrowseIds.Root, BrowseIds.Playlists, BrowseIds.Albums, BrowseIds.Artists, BrowseIds.Recent })
+        foreach (var id in BrowseIds.AccountFolders)
         {
             _session.NotifyChildrenChanged(id, int.MaxValue, null);
         }
