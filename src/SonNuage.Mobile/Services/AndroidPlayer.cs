@@ -25,6 +25,9 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
     private IDispatcherTimer? _ticker;
 
     public PlayerState State => _state;
+
+    /// <summary>Le service enchaîne en fondu avec un second ExoPlayer (<see cref="Crossfader"/>) : le réglage s'affiche.</summary>
+    public bool SupportsCrossfade => true;
     public event Action? StateChanged;
 
     public Task RestoreAsync() => OnMain(async c =>
