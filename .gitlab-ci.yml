@@ -83,6 +83,8 @@ android-apk:
       fi
       echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$CI_PROJECT_DIR/sonnuage.keystore"
     - dotnet nuget update source sonnuage --username gitlab-ci-token --password "$CI_JOB_TOKEN" --store-password-in-clear-text --configfile nuget.config
+    # Règles pures du lecteur (fondu enchaîné…), sans émulateur : quelques secondes avant le build.
+    - dotnet test --project tests/SonNuage.Mobile.Tests
     - dotnet publish src/SonNuage.Mobile/SonNuage.Mobile.csproj -f net10.0-android -c Release -o out
         -p:Version="$VERSION" -p:ApplicationVersion="$CI_PIPELINE_IID"
         -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$CI_PROJECT_DIR/sonnuage.keystore"

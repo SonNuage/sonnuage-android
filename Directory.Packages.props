@@ -14,5 +14,7 @@
     <PackageVersion Include="Xamarin.AndroidX.Media3.Common" Version="1.11.1" />
     <!-- Media3 tire androidx.core 1.19. Core-ktx doit suivre sinon classes en double au dex. -->
     <PackageVersion Include="Xamarin.AndroidX.Core.Core.Ktx" Version="1.19.0.1" />
+    <!-- Tests des règles pures (tests/SonNuage.Mobile.Tests). -->
+    <PackageVersion Include="xunit.v3" Version="4.0.2" />
   </ItemGroup>
 </Project>
