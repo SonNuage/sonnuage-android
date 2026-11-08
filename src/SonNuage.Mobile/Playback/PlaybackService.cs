@@ -215,17 +215,22 @@ public sealed class PlaybackService : MediaLibraryService
                 {
                     tracks = await api.RadioAsync(request);
                 }
-                catch (Exception ex) when (ex is ApiException or HttpRequestException)
+                catch (Exception ex) when (ex is ApiException || ServerFailure.IsNetwork(ex))
                 {
                     // Sans réseau, la file s'arrêtera simplement à son dernier morceau.
                 }
-                _handler.Post(() =>
+                finally
                 {
-                    _extending = false;
-                    // La file a changé de compte entre-temps : ces morceaux ne la concernent plus.
-                    if (tracks is not { Count: > 0 } || queueKey() != key) return;
-                    player.AddMediaItems(tracks.Select(browser.Item).ToList());
-                });
+                    // Toujours, même sur un échec inattendu : sans cela la lecture infinie restait bloquée jusqu'à la
+                    // fin du service (un délai dépassé suffisait).
+                    _handler.Post(() =>
+                    {
+                        _extending = false;
+                        // La file a changé de compte entre-temps : ces morceaux ne la concernent plus.
+                        if (tracks is not { Count: > 0 } || queueKey() != key) return;
+                        player.AddMediaItems(tracks.Select(browser.Item).ToList());
+                    });
+                }
             });
         }
 
@@ -264,8 +269,9 @@ public sealed class PlaybackService : MediaLibraryService
                 {
                     await api.ReportPlayAsync(new PlayEventRequest(track.Id, played, completed));
                 }
-                catch (Exception ex) when (ex is ApiException or HttpRequestException)
+                catch (Exception ex) when (ex is ApiException || ServerFailure.IsNetwork(ex))
                 {
+                    // Hors ligne ou refusé : cette écoute n'est pas comptée, comme sur le web.
                 }
             });
         }

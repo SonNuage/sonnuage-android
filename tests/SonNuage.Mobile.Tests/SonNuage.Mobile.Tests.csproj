@@ -15,6 +15,7 @@
     <Compile Include="..\..\src\SonNuage.Mobile\Playback\CrossfadeTiming.cs" Link="Playback\CrossfadeTiming.cs" />
     <Compile Include="..\..\src\SonNuage.Mobile\Playback\BrowseIds.cs" Link="Playback\BrowseIds.cs" />
     <Compile Include="..\..\src\SonNuage.Mobile\Playback\QueueSnapshot.cs" Link="Playback\QueueSnapshot.cs" />
+    <Compile Include="..\..\src\SonNuage.Mobile\Playback\ServerFailure.cs" Link="Playback\ServerFailure.cs" />
   </ItemGroup>
 
   <ItemGroup>

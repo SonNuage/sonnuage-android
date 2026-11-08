@@ -50,7 +50,7 @@ public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiC
             var index = Math.Max(0, tracks.FindIndex(t => t.Id == current));
             return (tracks.Select(browser.Item).ToList(), index, tracks[index].Id == current ? saved.PositionMs : 0, saved.RepeatMode);
         }
-        catch (Exception ex) when (ex is JsonException or ApiException or HttpRequestException)
+        catch (Exception ex) when (ex is ApiException || ServerFailure.IsNetwork(ex))
         {
             return null;
         }
