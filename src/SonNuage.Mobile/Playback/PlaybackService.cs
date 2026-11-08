@@ -38,6 +38,7 @@ public sealed class PlaybackService : MediaLibraryService
     private Prefetcher? _prefetcher;
     private AccountStore? _accounts;
     private QueueStore? _queue;
+    private Crossfader? _crossfader;
 
     /// <summary>Clé de sauvegarde de la file actuellement chargée (celle du compte à qui elle appartient).</summary>
     private string? _queueKey;
@@ -75,8 +76,9 @@ public sealed class PlaybackService : MediaLibraryService
             .SetContentType(C.AudioContentTypeMusic)!
             .Build();
 
+        var sources = new ResolvingDataSource.Factory(cached, resolver);
         var exo = new ExoPlayerBuilder(this)
-            .SetMediaSourceFactory(new DefaultMediaSourceFactory(new ResolvingDataSource.Factory(cached, resolver), extractors))!
+            .SetMediaSourceFactory(new DefaultMediaSourceFactory(sources, extractors))!
             .SetLoadControl(loadControl)!
             .SetAudioAttributes(audio, true)!
             .SetHandleAudioBecomingNoisy(true)!
@@ -84,6 +86,13 @@ public sealed class PlaybackService : MediaLibraryService
             .Build()!;
         exo.ShuffleOrder = new ShuffleOrderUnshuffledShuffleOrder(0);
         var player = new ShufflingPlayer(exo);
+        // Second lecteur du fondu enchaîné (voir Crossfader) : mêmes sources et même cache, sans focus audio ni
+        // gestion du casque débranché, que le principal porte pour les deux.
+        var tail = new ExoPlayerBuilder(this)
+            .SetMediaSourceFactory(new DefaultMediaSourceFactory(sources, extractors))!
+            .SetAudioAttributes(audio, false)!
+            .Build()!;
+        var crossfader = _crossfader = new Crossfader(exo, player, tail, settings);
 
         _prefetcher = new Prefetcher(cached, resolver, settings);
 
@@ -93,7 +102,7 @@ public sealed class PlaybackService : MediaLibraryService
             .Build();
         // Après la session : à chaque changement de piste, elle publie le nouveau titre (notification, Android Auto)
         // avant nos traitements.
-        player.AddListener(new PlayerEvents(player, _prefetcher, queue, () => _queueKey, api, settings, browser));
+        player.AddListener(new PlayerEvents(player, _prefetcher, crossfader, queue, () => _queueKey, api, settings, browser));
         accounts.ActiveChanged += OnAccountChanged;
     }
 
@@ -132,6 +141,8 @@ public sealed class PlaybackService : MediaLibraryService
     {
         if (_accounts is not null) _accounts.ActiveChanged -= OnAccountChanged;
         _prefetcher?.Cancel();
+        _crossfader?.Release();
+        _crossfader = null;
         if (_session is not null)
         {
             _session.Player?.Release();
@@ -154,7 +165,7 @@ public sealed class PlaybackService : MediaLibraryService
     }
 
     /// <summary>Événements du lecteur : pré-chargement, historique d'écoute, sauvegarde de la file.</summary>
-    private sealed class PlayerEvents(Media3IPlayer player, Prefetcher prefetcher, QueueStore queue, Func<string?> queueKey, ApiClient api, PlaybackSettings settings, LibraryBrowser browser) : Java.Lang.Object, IPlayerListener
+    private sealed class PlayerEvents(Media3IPlayer player, Prefetcher prefetcher, Crossfader crossfader, QueueStore queue, Func<string?> queueKey, ApiClient api, PlaybackSettings settings, LibraryBrowser browser) : Java.Lang.Object, IPlayerListener
     {
         // Un seul appel de lecture infinie à la fois : deux changements de piste rapprochés ne doivent pas doubler l'ajout.
         private bool _extending;
@@ -219,8 +230,12 @@ public sealed class PlaybackService : MediaLibraryService
 
         public void OnPositionDiscontinuity(PlayerPositionInfo? oldPosition, PlayerPositionInfo? newPosition, int reason)
         {
-            if (oldPosition is null || newPosition is null || oldPosition.MediaItemIndex == newPosition.MediaItemIndex && reason != PlayerConst.DiscontinuityAutoTransition) return;
-            Report(oldPosition.MediaItem, oldPosition.PositionMs / 1000.0, reason == PlayerConst.DiscontinuityAutoTransition);
+            if (oldPosition is null || newPosition is null) return;
+            // Un fondu enchaîné quitte la piste par un saut (SEEK), mais elle a été écoutée jusqu'au bout. En répétition
+            // d'une piste, il revient sur le même index : compté quand même, une fois.
+            var completed = reason == PlayerConst.DiscontinuityAutoTransition || crossfader.TakeHandover(oldPosition.MediaItem);
+            if (oldPosition.MediaItemIndex == newPosition.MediaItemIndex && !completed) return;
+            Report(oldPosition.MediaItem, oldPosition.PositionMs / 1000.0, completed);
         }
 
         public void OnPlaybackStateChanged(int playbackState)
