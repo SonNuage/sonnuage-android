@@ -87,6 +87,8 @@ public sealed class MobilePlatform : IPlatformInfo
 {
     public bool HasMeteredNetworkDetection => true;
     public string Name => "android";
+    /// <summary>Version de l'APK (versionName), affichée dans l'aide et le menu du compte.</summary>
+    public string? AppVersion => Microsoft.Maui.ApplicationModel.AppInfo.Current.VersionString;
 
     /// <summary>Wi-Fi/Ethernet : qualité normale. Réseau facturé à l'usage (4G…) : qualité mobile.</summary>
     public static bool IsMetered()
