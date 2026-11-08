@@ -93,7 +93,7 @@ public sealed class PlaybackService : MediaLibraryService
             .Build();
         // Après la session : à chaque changement de piste, elle publie le nouveau titre (notification, Android Auto)
         // avant nos traitements.
-        player.AddListener(new PlayerEvents(player, _prefetcher, queue, () => _queueKey, api));
+        player.AddListener(new PlayerEvents(player, _prefetcher, queue, () => _queueKey, api, settings, browser));
         accounts.ActiveChanged += OnAccountChanged;
     }
 
@@ -154,8 +154,10 @@ public sealed class PlaybackService : MediaLibraryService
     }
 
     /// <summary>Événements du lecteur : pré-chargement, historique d'écoute, sauvegarde de la file.</summary>
-    private sealed class PlayerEvents(Media3IPlayer player, Prefetcher prefetcher, QueueStore queue, Func<string?> queueKey, ApiClient api) : Java.Lang.Object, IPlayerListener
+    private sealed class PlayerEvents(Media3IPlayer player, Prefetcher prefetcher, QueueStore queue, Func<string?> queueKey, ApiClient api, PlaybackSettings settings, LibraryBrowser browser) : Java.Lang.Object, IPlayerListener
     {
+        // Un seul appel de lecture infinie à la fois : deux changements de piste rapprochés ne doivent pas doubler l'ajout.
+        private bool _extending;
         private const double PlayThresholdSeconds = 30;
 
         public void OnTimelineChanged(Timeline? timeline, int reason) => prefetcher.Schedule(player);
@@ -167,7 +169,46 @@ public sealed class PlaybackService : MediaLibraryService
         {
             prefetcher.Schedule(player);
             queue.Save(player, queueKey());
+            Extend();
         });
+
+        /// <summary>
+        /// Lecture infinie (même règle que le web, <see cref="InfinitePlay"/>) : garder l'avance réglée après la piste
+        /// en cours en demandant au serveur des morceaux proches. Appelé sur le thread principal.
+        /// </summary>
+        private void Extend()
+        {
+            if (!settings.InfinitePlay || player.RepeatMode != PlayerConst.RepeatOff || _extending || queueKey() is not { } key) return;
+            var count = player.MediaItemCount;
+            var needed = InfinitePlay.Needed(count, player.CurrentMediaItemIndex, settings.InfiniteAhead);
+            if (needed == 0) return;
+            var ids = new List<Guid>(count);
+            for (var i = 0; i < count; i++)
+            {
+                if (TrackItems.ToTrack(player.GetMediaItemAt(i)) is { } t) ids.Add(t.Id);
+            }
+            var request = new RadioRequest(InfinitePlay.Seeds(ids, player.CurrentMediaItemIndex), ids.TakeLast(RadioRequest.MaxIds).ToList(), needed);
+            _extending = true;
+            _ = Task.Run(async () =>
+            {
+                List<TrackDto>? tracks = null;
+                try
+                {
+                    tracks = await api.RadioAsync(request);
+                }
+                catch (Exception ex) when (ex is ApiException or HttpRequestException)
+                {
+                    // Sans réseau, la file s'arrêtera simplement à son dernier morceau.
+                }
+                _handler.Post(() =>
+                {
+                    _extending = false;
+                    // La file a changé de compte entre-temps : ces morceaux ne la concernent plus.
+                    if (tracks is not { Count: > 0 } || queueKey() != key) return;
+                    player.AddMediaItems(tracks.Select(browser.Item).ToList());
+                });
+            });
+        }
 
         public void OnRepeatModeChanged(int repeatMode) => prefetcher.Schedule(player);
 
