@@ -358,24 +358,19 @@ public sealed class PlaybackService : MediaLibraryService
 /// </summary>
 public sealed class Prefetcher(CacheDataSource.Factory cacheFactory, StreamResolver resolver, PlaybackSettings settings)
 {
-    private CancellationTokenSource? _cts;
-    private CacheWriter? _writer;
+    /// <summary>
+    /// Passage en cours. Chaque passage a son propre jeton et ses propres téléchargements : un ancien passage ne
+    /// touche jamais à l'état du suivant (avant, un écrivain partagé pouvait être écrasé et échapper à l'annulation).
+    /// </summary>
+    private CancellationTokenSource? _run;
 
     /// <summary>À appeler sur le thread du lecteur.</summary>
     public void Schedule(Media3IPlayer player)
     {
         var uris = new List<Android.Net.Uri>();
-        var count = player.MediaItemCount;
-        var index = player.CurrentMediaItemIndex;
-        for (var step = 1; step <= settings.PrefetchCount && count > 0 && index >= 0; step++)
+        var repeatAll = player.RepeatMode == PlayerConst.RepeatAll;
+        foreach (var next in PrefetchPlan.Indices(player.MediaItemCount, player.CurrentMediaItemIndex, settings.PrefetchCount, repeatAll))
         {
-            var next = index + step;
-            if (next >= count)
-            {
-                if (player.RepeatMode != PlayerConst.RepeatAll) break;
-                next %= count;
-            }
-            if (next == index) break;
 #pragma warning disable CS0618 // localConfiguration n'est exposé par le binding que sous son ancien nom.
             if (player.GetMediaItemAt(next)?.PlaybackProperties?.Uri is { } uri) uris.Add(uri);
 #pragma warning restore CS0618
@@ -383,22 +378,28 @@ public sealed class Prefetcher(CacheDataSource.Factory cacheFactory, StreamResol
 
         Cancel();
         if (uris.Count == 0) return;
-        var cts = _cts = new CancellationTokenSource();
+        var run = _run = new CancellationTokenSource();
+        var token = run.Token;
         _ = Task.Run(() =>
         {
             foreach (var uri in uris)
             {
-                if (cts.IsCancellationRequested) return;
+                if (token.IsCancellationRequested) return;
                 try
                 {
                     var spec = resolver.ResolveDataSpec(new DataSpec(uri));
-                    var writer = _writer = new CacheWriter(cacheFactory.CreateDataSourceForDownloading(), spec, null, null);
-                    if (cts.IsCancellationRequested) return;
-                    writer.Cache();
+                    var writer = new CacheWriter(cacheFactory.CreateDataSourceForDownloading(), spec, null, null);
+                    // Déjà annulé : Register appelle Cancel tout de suite, Cache s'arrête aussitôt.
+                    using (token.Register(writer.Cancel)) writer.Cache();
                 }
-                catch (Exception)
+                catch (Java.IO.IOException)
                 {
                     // Réseau absent, annulation, session expirée : la lecture normale prendra le relais.
+                }
+                catch (Exception ex)
+                {
+                    // Inattendu, mais le pré-chargement n'est qu'un confort : noté dans logcat, sans arrêter l'appli.
+                    Android.Util.Log.Warn("SonNuage", $"Pré-chargement en échec : {ex}");
                 }
             }
         });
@@ -406,8 +407,7 @@ public sealed class Prefetcher(CacheDataSource.Factory cacheFactory, StreamResol
 
     public void Cancel()
     {
-        _cts?.Cancel();
-        _writer?.Cancel();
-        _writer = null;
+        _run?.Cancel();
+        _run = null;
     }
 }
