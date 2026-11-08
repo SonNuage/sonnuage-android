@@ -18,7 +18,7 @@ namespace SonNuage.Mobile.Services;
 public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settings, LibraryBrowser browser, Breadcrumbs crumbs) : IPlayer, IRestorablePlayer
 {
     private MediaController? _controller;
-    private Task<MediaController>? _connecting;
+    private SharedConnection<MediaController>? _connection;
     private PlayerState _state = PlayerState.Empty;
     private IReadOnlyList<TrackDto> _queue = [];
     private readonly Dictionary<Guid, TrackDto> _updated = [];
@@ -127,11 +127,9 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
         }
     });
 
-    private Task<MediaController> ControllerAsync()
-    {
-        if (_controller is not null) return Task.FromResult(_controller);
-        return _connecting ??= ConnectAsync();
-    }
+    /// <summary>Connexion refaite après un échec, ou si le service l'a coupée (voir <see cref="SharedConnection{T}"/>).</summary>
+    private Task<MediaController> ControllerAsync() =>
+        (_connection ??= new SharedConnection<MediaController>(ConnectAsync, c => c.IsConnected, c => c.Release())).GetAsync();
 
     private async Task<MediaController> ConnectAsync()
     {
@@ -141,9 +139,12 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
         var controller = result.JavaCast<MediaController>()!;
         controller.AddListener(new Listener(this));
         _controller = controller;
-        _ticker = Application.Current!.Dispatcher.CreateTimer();
-        _ticker.Interval = TimeSpan.FromMilliseconds(500);
-        _ticker.Tick += (_, _) => Refresh(timelineChanged: false);
+        if (_ticker is null)
+        {
+            _ticker = Application.Current!.Dispatcher.CreateTimer();
+            _ticker.Interval = TimeSpan.FromMilliseconds(500);
+            _ticker.Tick += (_, _) => Refresh(timelineChanged: false);
+        }
         Refresh(timelineChanged: true);
         return controller;
     }
