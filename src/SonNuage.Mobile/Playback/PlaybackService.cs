@@ -277,7 +277,10 @@ public sealed class PlaybackService : MediaLibraryService
     private sealed class LibraryCallback(LibraryBrowser browser, QueueStore queue) : Java.Lang.Object, MediaLibrarySession.ICallback
     {
         private const int ErrorNotSupported = -6;
-        private readonly Dictionary<string, IList<MediaItem>> _searches = [];
+        private readonly object _searchLock = new();
+        // Dernière recherche seulement : Media3 demande ses pages juste après l'avoir annoncée. Un dictionnaire gardait
+        // toutes les recherches jusqu'à la fin du service.
+        private (string Query, IList<MediaItem> Results)? _lastSearch;
 
         // Android Auto et le système demandent une racine « récents » (isRecent) pour proposer l'appli en suggestion et
         // reprendre la lecture : elle contient la piste de la file sauvegardée.
@@ -303,7 +306,7 @@ public sealed class PlaybackService : MediaLibraryService
             FutureExtensions.FromTask(async () =>
             {
                 var results = await browser.SearchAsync(query ?? "");
-                lock (_searches) _searches[query ?? ""] = results;
+                lock (_searchLock) _lastSearch = (query ?? "", results);
                 MainThread.BeginInvokeOnMainThread(() => session?.NotifySearchResultChanged(browserInfo, query, results.Count, @params));
                 return LibraryResult.OfVoid()!;
             });
@@ -312,7 +315,7 @@ public sealed class PlaybackService : MediaLibraryService
             FutureExtensions.FromTask(async () =>
             {
                 IList<MediaItem>? results;
-                lock (_searches) _searches.TryGetValue(query ?? "", out results);
+                lock (_searchLock) results = _lastSearch is { } last && last.Query == (query ?? "") ? last.Results : null;
                 results ??= await browser.SearchAsync(query ?? "");
                 return LibraryResult.OfItemList(Page(results, page, pageSize), @params)!;
             });
