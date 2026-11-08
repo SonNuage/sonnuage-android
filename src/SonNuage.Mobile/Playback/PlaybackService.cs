@@ -176,12 +176,20 @@ public sealed class PlaybackService : MediaLibraryService
         // Remis à la boucle suivante du thread : la session finit de publier le nouveau titre avant.
         private readonly Android.OS.Handler _handler = new(Android.OS.Looper.MainLooper!);
 
-        public void OnMediaItemTransition(MediaItem? mediaItem, int reason) => _handler.Post(() =>
+        public void OnMediaItemTransition(MediaItem? mediaItem, int reason)
         {
-            prefetcher.Schedule(player);
-            queue.Save(player, queueKey());
-            Extend();
-        });
+            // Clé lue maintenant, pas au passage du Post. Le changement de compte vide la file (clé nulle), puis
+            // passe à la clé du compte suivant avant ce Post : relue plus tard, elle enregistrait la file vide sous le
+            // compte suivant et effaçait sa file sauvegardée.
+            var key = queueKey();
+            _handler.Post(() =>
+            {
+                prefetcher.Schedule(player);
+                if (key is null || key != queueKey()) return;
+                queue.Save(player, key);
+                Extend();
+            });
+        }
 
         /// <summary>
         /// Lecture infinie (même règle que le web, <see cref="InfinitePlay"/>) : garder l'avance réglée après la piste
