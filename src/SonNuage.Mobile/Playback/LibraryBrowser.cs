@@ -45,6 +45,10 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
                     Playable(BrowseIds.ShuffleAll, NativeText.Get("player.shuffle", "Lecture aléatoire"), NativeText.Get("editor.wholeLibrary", "Toute la bibliothèque"), null, MediaMetadata.MediaTypePlaylist),
                     Container(BrowseIds.Favorites, NativeText.Get("nav.likedSongs", "Titres likés"), null, null, MediaMetadata.MediaTypePlaylist),
                 };
+                if (await StationsAsync() is { Count: > 0 })
+                {
+                    items.Add(Folder(BrowseIds.Radios, NativeText.Get("radio.title", "Radios"), MediaMetadata.MediaTypeFolderRadioStations));
+                }
                 foreach (var p in await api.PlaylistsAsync() ?? [])
                 {
                     items.Add(Container(BrowseIds.Playlist(p.Id), p.Name, $"{p.TrackCount} titres", api.CoverUrl(p.CoverAlbumId, 300), MediaMetadata.MediaTypePlaylist));
@@ -62,6 +66,9 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
                 return (page?.Items ?? []).Select(a => Container(BrowseIds.Artist(a.Id), a.Name, $"{a.AlbumCount} albums",
                     api.CoverUrl(a.CoverAlbumId, 300), MediaMetadata.MediaTypeArtist)).ToList();
             }
+            case BrowseIds.Radios:
+                return (await StationsAsync() ?? []).Select(s => Playable(BrowseIds.Station(s.Id), s.Name, s.Description,
+                    api.CoverUrl(s.CoverAlbumIds.Count > 0 ? s.CoverAlbumIds[0] : null, 300), MediaMetadata.MediaTypeRadioStation)).ToList();
             case BrowseIds.ArtistKind:
             {
                 var artist = await api.ArtistAsync(id);
@@ -106,6 +113,12 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
                 if (tracks.Count == 0 && found?.Albums.FirstOrDefault() is { } album) tracks = await TracksAsync(BrowseIds.Album(album.Id));
                 return (tracks.Select(Item).ToList(), 0);
             }
+            if (BrowseIds.StationId(mediaId) is { } station)
+            {
+                // Radio thématique (Android Auto ou l'appli) : un premier lot, que la lecture complète ensuite.
+                var batch = await api.RadioStationNextAsync(station, new StationNextRequest([], QueueRefill.StationFirstBatch)) ?? [];
+                return (batch.Select(t => StationItem(t, station)).ToList(), 0);
+            }
             if (BrowseIds.SplitContext(mediaId) is { } inContext)
             {
                 var context = await TracksAsync(inContext.Context);
@@ -138,6 +151,22 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
     /// <summary>Piste venue de la radio <paramref name="station"/> (null : d'ailleurs).</summary>
     public MediaItem StationItem(TrackDto track, string? station) =>
         TrackItems.From(track, api.CoverUrl(track.HasCover ? track.AlbumId : null, 600), station);
+
+    /// <summary>
+    /// Radios du serveur ; aucune sur un serveur antérieur (404, lu comme null) ou injoignable : le reste du dossier
+    /// s'affiche quand même.
+    /// </summary>
+    private async Task<List<RadioStationDto>?> StationsAsync()
+    {
+        try
+        {
+            return await api.RadioStationsAsync();
+        }
+        catch (Exception ex) when (ex is ApiException || ServerFailure.IsNetwork(ex))
+        {
+            return null;
+        }
+    }
 
     private async Task<List<TrackDto>> TracksAsync(string contextId)
     {
