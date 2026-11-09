@@ -6,8 +6,11 @@ namespace SonNuage.Mobile.Playback;
 /// </summary>
 public static class QueueRefill
 {
-    /// <summary>Morceaux demandés à une radio thématique quand on la lance.</summary>
-    public const int StationFirstBatch = 30;
+    /// <summary>Morceaux demandés à une radio thématique quand Android Auto la lance (l'appli en demande autant).</summary>
+    public const int StationFirstBatch = 25;
+
+    /// <summary>Avance minimale d'une radio thématique, même si la lecture infinie en garde moins (comme le web).</summary>
+    public const int StationAhead = 5;
 
     /// <summary>
     /// Radio que suit la file : celle de la piste en cours, sinon celle de la dernière piste. Un titre ajouté à la main
@@ -20,4 +23,7 @@ public static class QueueRefill
     /// file ou du titre) coupe tout, comme sur le web.
     /// </summary>
     public static bool Applies(bool fromStation, bool infinitePlay, bool repeatOff) => repeatOff && (fromStation || infinitePlay);
+
+    /// <summary>Morceaux à garder après celui qui joue.</summary>
+    public static int Ahead(bool fromStation, int infiniteAhead) => fromStation ? Math.Max(infiniteAhead, StationAhead) : infiniteAhead;
 }

@@ -24,4 +24,11 @@ public class QueueRefillTests
     [InlineData(false, true, false, false)]
     public void A_station_keeps_playing_even_without_infinite_play_but_repeat_stops_both(bool fromStation, bool infinitePlay, bool repeatOff, bool refills) =>
         Assert.Equal(refills, QueueRefill.Applies(fromStation, infinitePlay, repeatOff));
+
+    [Theory]
+    [InlineData(false, 3, 3)]
+    [InlineData(true, 3, 5)]
+    [InlineData(true, 8, 8)]
+    public void A_station_keeps_at_least_five_tracks_ahead_like_the_web_player(bool fromStation, int infiniteAhead, int ahead) =>
+        Assert.Equal(ahead, QueueRefill.Ahead(fromStation, infiniteAhead));
 }
