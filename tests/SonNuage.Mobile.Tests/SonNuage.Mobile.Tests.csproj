@@ -19,6 +19,7 @@
     <Compile Include="..\..\src\SonNuage.Mobile\Playback\PrefetchPlan.cs" Link="Playback\PrefetchPlan.cs" />
     <Compile Include="..\..\src\SonNuage.Mobile\Playback\ListenRule.cs" Link="Playback\ListenRule.cs" />
     <Compile Include="..\..\src\SonNuage.Mobile\Playback\ShuffleOrder.cs" Link="Playback\ShuffleOrder.cs" />
+    <Compile Include="..\..\src\SonNuage.Mobile\Playback\QueueRefill.cs" Link="Playback\QueueRefill.cs" />
     <Compile Include="..\..\src\SonNuage.Mobile\Services\SharedConnection.cs" Link="Services\SharedConnection.cs" />
   </ItemGroup>
 
