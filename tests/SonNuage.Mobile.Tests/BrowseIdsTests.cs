@@ -44,4 +44,22 @@ public class BrowseIdsTests
     [Fact]
     public void A_context_with_a_garbled_track_still_names_the_context() =>
         Assert.Equal((Guid.Empty, BrowseIds.Favorites), BrowseIds.SplitContext("track:x@favorites"));
+
+    [Fact]
+    public void A_station_id_is_read_back_from_its_media_id() =>
+        Assert.Equal("good-mood-pop", BrowseIds.StationId(BrowseIds.Station("good-mood-pop")));
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("station:")]
+    [InlineData(BrowseIds.Radios)]
+    [InlineData("track:11111111222233334444555555555555")]
+    public void Anything_else_is_not_a_station(string? mediaId) => Assert.Null(BrowseIds.StationId(mediaId));
+
+    [Fact]
+    public void A_station_is_not_mistaken_for_a_track() => Assert.Null(BrowseIds.TrackId(BrowseIds.Station("halloween")));
+
+    [Fact]
+    public void The_radios_folder_reloads_when_the_account_changes() => Assert.Contains(BrowseIds.Radios, BrowseIds.AccountFolders);
 }

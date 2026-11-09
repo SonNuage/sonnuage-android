@@ -13,6 +13,8 @@ public static class BrowseIds
     public const string Artists = "artists";
     public const string Recent = "recent";
     public const string Favorites = "favorites";
+    /// <summary>Dossier des radios thématiques du serveur (absent si le serveur n'en propose pas).</summary>
+    public const string Radios = "radios";
     public const string ShuffleAll = "shuffle";
     public const string ResumeRoot = "resume-root";
     public const string Resume = "resume";
@@ -22,14 +24,17 @@ public static class BrowseIds
     public const string AlbumKind = "album";
     public const string ArtistKind = "artist";
     public const string PlaylistKind = "playlist";
+    /// <summary>Radio thématique : « station:{id} », l'identifiant du serveur n'est pas un Guid (« halloween »…).</summary>
+    public const string StationKind = "station";
 
     /// <summary>Dossiers qu'Android Auto doit recharger quand le compte change.</summary>
-    public static readonly IReadOnlyList<string> AccountFolders = [Root, Playlists, Albums, Artists, Recent];
+    public static readonly IReadOnlyList<string> AccountFolders = [Root, Playlists, Albums, Artists, Recent, Radios];
 
     public static string Track(Guid id) => $"{TrackKind}:{id:N}";
     public static string Album(Guid id) => $"{AlbumKind}:{id:N}";
     public static string Artist(Guid id) => $"{ArtistKind}:{id:N}";
     public static string Playlist(Guid id) => $"{PlaylistKind}:{id:N}";
+    public static string Station(string stationId) => $"{StationKind}:{stationId}";
     public static string InContext(Guid trackId, string context) => $"{Track(trackId)}@{context}";
 
     public static (string Kind, Guid Id) Parse(string id)
@@ -41,6 +46,12 @@ public static class BrowseIds
     /// <summary>Identifiant de piste valide (« track:{id} »), sinon null.</summary>
     public static Guid? TrackId(string? mediaId) =>
         Parse(mediaId ?? "") is (TrackKind, var id) && id != Guid.Empty ? id : null;
+
+    /// <summary>Identifiant de radio d'un élément « station:{id} », sinon null.</summary>
+    public static string? StationId(string? mediaId) =>
+        mediaId is not null && mediaId.StartsWith($"{StationKind}:", StringComparison.Ordinal) && mediaId.Length > StationKind.Length + 1
+            ? mediaId[(StationKind.Length + 1)..]
+            : null;
 
     /// <summary>
     /// « track:{id}@{contexte} » : la piste (Guid.Empty si illisible, la lecture part alors du début du contexte) et
