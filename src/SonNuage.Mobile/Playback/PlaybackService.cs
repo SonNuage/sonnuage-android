@@ -189,14 +189,18 @@ public sealed class PlaybackService : MediaLibraryService
         }
 
         /// <summary>
-        /// Lecture infinie (même règle que le web, <see cref="InfinitePlay"/>) : garder l'avance réglée après la piste
-        /// en cours en demandant au serveur des morceaux proches. Appelé sur le thread principal.
+        /// Garde l'avance réglée après la piste en cours (même règle que le web, <see cref="InfinitePlay"/>) : morceaux
+        /// de la radio thématique que suit la file, sinon morceaux proches (lecture infinie). Voir <see cref="QueueRefill"/>.
+        /// Appelé sur le thread principal.
         /// </summary>
         private void Extend()
         {
-            if (!settings.InfinitePlay || player.RepeatMode != PlayerConst.RepeatOff || _extending || queueKey() is not { } key) return;
+            if (_extending || queueKey() is not { } key) return;
+            var station = player.QueueStation();
+            var infinitePlay = settings.InfinitePlay;
+            if (!QueueRefill.Applies(station is not null, infinitePlay, player.RepeatMode == PlayerConst.RepeatOff)) return;
             var count = player.MediaItemCount;
-            var needed = InfinitePlay.Needed(count, player.CurrentMediaItemIndex, settings.InfiniteAhead);
+            var needed = InfinitePlay.Needed(count, player.CurrentMediaItemIndex, QueueRefill.Ahead(station is not null, settings.InfiniteAhead));
             if (needed == 0) return;
             var ids = new List<Guid>(count);
             for (var i = 0; i < count; i++)
@@ -208,9 +212,10 @@ public sealed class PlaybackService : MediaLibraryService
             _ = Task.Run(async () =>
             {
                 List<TrackDto>? tracks = null;
+                string? from = null;
                 try
                 {
-                    tracks = await api.RadioAsync(request);
+                    (tracks, from) = await RefillAsync(station, request, infinitePlay);
                 }
                 catch (Exception ex) when (ex is ApiException || ServerFailure.IsNetwork(ex))
                 {
@@ -225,10 +230,30 @@ public sealed class PlaybackService : MediaLibraryService
                         _extending = false;
                         // La file a changé de compte entre-temps : ces morceaux ne la concernent plus.
                         if (tracks is not { Count: > 0 } || queueKey() != key) return;
-                        player.AddMediaItems(tracks.Select(browser.Item).ToList());
+                        player.AddMediaItems(tracks.Select(t => browser.StationItem(t, from)).ToList());
                     });
                 }
             });
+        }
+
+        /// <summary>
+        /// Morceaux de la radio que suit la file, sinon de la lecture infinie, et la radio d'où ils viennent. Une radio
+        /// qui n'est plus proposée (fin de saison) laisse la main à la lecture infinie, comme sur le web.
+        /// </summary>
+        private async Task<(List<TrackDto>? Tracks, string? Station)> RefillAsync(string? station, RadioRequest request, bool infinitePlay)
+        {
+            if (station is not null)
+            {
+                try
+                {
+                    return (await api.RadioStationNextAsync(station, new StationNextRequest(request.ExcludeTrackIds, request.Count)), station);
+                }
+                catch (ApiException) when (infinitePlay)
+                {
+                    // Plus proposée : la lecture infinie complète la file.
+                }
+            }
+            return (await api.RadioAsync(request), null);
         }
 
         public void OnRepeatModeChanged(int repeatMode) => prefetcher.Schedule(player);

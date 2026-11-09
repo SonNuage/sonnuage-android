@@ -13,7 +13,8 @@ public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiC
 {
     private const string BaseKey = "sonnuage.queue";
 
-    public sealed record Saved(List<Guid> Ids, int Index, long PositionMs, int RepeatMode);
+    /// <param name="Station">Radio thématique que suivait la file (absente des sauvegardes plus anciennes).</param>
+    public sealed record Saved(List<Guid> Ids, int Index, long PositionMs, int RepeatMode, string? Station = null);
 
     /// <summary>File sauvegardée, pistes rechargées : prête à être rendue au lecteur.</summary>
     public sealed record Restored(List<MediaItem> Items, int Index, long PositionMs, int RepeatMode)
@@ -48,7 +49,7 @@ public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiC
         var queue = new Guid?[count];
         for (var i = 0; i < count; i++) queue[i] = BrowseIds.TrackId(player.GetMediaItemAt(i)?.MediaId);
         var (ids, index) = QueueSnapshot.Take(queue, player.CurrentMediaItemIndex);
-        var saved = new Saved(ids, index, Math.Max(0, player.CurrentPosition), player.RepeatMode);
+        var saved = new Saved(ids, index, Math.Max(0, player.CurrentPosition), player.RepeatMode, player.QueueStation());
         _ = store.SetAsync(key, JsonSerializer.Serialize(saved, JsonDefaults.Options));
     }
 
@@ -66,7 +67,7 @@ public sealed class QueueStore(IKeyValueStore store, AccountStore accounts, ApiC
             var tracks = await api.LookupTracksAsync(saved.Ids) ?? [];
             if (tracks.Count == 0) return null;
             var index = Math.Max(0, tracks.FindIndex(t => t.Id == current));
-            return new Restored(tracks.Select(browser.Item).ToList(), index, tracks[index].Id == current ? saved.PositionMs : 0, saved.RepeatMode);
+            return new Restored(tracks.Select(t => browser.StationItem(t, saved.Station)).ToList(), index, tracks[index].Id == current ? saved.PositionMs : 0, saved.RepeatMode);
         }
         catch (Exception ex) when (ex is ApiException || ServerFailure.IsNetwork(ex))
         {

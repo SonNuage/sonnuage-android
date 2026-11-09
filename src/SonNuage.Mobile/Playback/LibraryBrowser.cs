@@ -122,7 +122,8 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
         var missing = new List<Guid>();
         foreach (var item in requested)
         {
-            if (TrackItems.ToTrack(item) is { } track) resolved.Add(Item(track));
+            // La radio d'origine reste attachée : la file restaurée ou ré-envoyée par l'appli continue de la suivre.
+            if (TrackItems.ToTrack(item) is { } track) resolved.Add(StationItem(track, TrackItems.Station(item)));
             else if (BrowseIds.Parse(item.MediaId ?? "") is (BrowseIds.TrackKind, var id)) missing.Add(id);
         }
         if (missing.Count > 0)
@@ -132,7 +133,11 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
         return (resolved, Math.Clamp(startIndex, 0, Math.Max(0, resolved.Count - 1)));
     }
 
-    public MediaItem Item(TrackDto track) => TrackItems.From(track, api.CoverUrl(track.HasCover ? track.AlbumId : null, 600));
+    public MediaItem Item(TrackDto track) => StationItem(track, null);
+
+    /// <summary>Piste venue de la radio <paramref name="station"/> (null : d'ailleurs).</summary>
+    public MediaItem StationItem(TrackDto track, string? station) =>
+        TrackItems.From(track, api.CoverUrl(track.HasCover ? track.AlbumId : null, 600), station);
 
     private async Task<List<TrackDto>> TracksAsync(string contextId)
     {

@@ -8,16 +8,21 @@ using SonNuage.UI.Services;
 
 namespace SonNuage.Mobile.Playback;
 
-/// <summary>Conversion TrackDto ⇄ MediaItem. La piste complète voyage en JSON dans les extras des métadonnées.</summary>
+/// <summary>
+/// Conversion TrackDto ⇄ MediaItem. La piste complète voyage en JSON dans les extras des métadonnées, avec la radio
+/// thématique d'où elle vient (voir <see cref="QueueRefill"/>).
+/// </summary>
 public static class TrackItems
 {
     public const string Scheme = "sonnuage";
     private const string TrackExtra = "sonnuage.track";
+    private const string StationExtra = "sonnuage.station";
 
-    public static MediaItem From(TrackDto track, string? artworkUrl)
+    public static MediaItem From(TrackDto track, string? artworkUrl, string? station = null)
     {
         var extras = new Bundle();
         extras.PutString(TrackExtra, JsonSerializer.Serialize(track, JsonDefaults.Options));
+        if (station is not null) extras.PutString(StationExtra, station);
         var metadata = new MediaMetadata.Builder()
             .SetTitle(track.Title)!
             .SetArtist(track.ArtistName)!
@@ -56,12 +61,19 @@ public static class TrackItems
         }
     }
 
+    /// <summary>Radio thématique d'où vient la piste, null pour une piste ajoutée autrement.</summary>
+    public static string? Station(MediaItem? item) => item?.MediaMetadata?.Extras?.GetString(StationExtra);
+
     /// <summary>Recherche vocale (« Ok Google, mets … ») : le champ requestMetadata n'est pas exposé par le binding.</summary>
     public static string? SearchQuery(MediaItem item)
     {
         var field = item.JniPeerMembers.InstanceFields.GetObjectValue("requestMetadata.Landroidx/media3/common/MediaItem$RequestMetadata;", item);
         return Java.Lang.Object.GetObject<MediaItem.RequestMetadata>(field.Handle, Android.Runtime.JniHandleOwnership.TransferLocalRef)?.SearchQuery;
     }
+
+    /// <summary>Radio thématique que suit la file (<see cref="QueueRefill.Station"/>), null pour une file ordinaire.</summary>
+    public static string? QueueStation(this Media3IPlayer player) =>
+        player.MediaItemCount == 0 ? null : QueueRefill.Station(Station(player.CurrentMediaItem), Station(player.GetMediaItemAt(player.MediaItemCount - 1)));
 
     public static List<MediaItem> Items(this Media3IPlayer player)
     {

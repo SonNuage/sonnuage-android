@@ -47,6 +47,20 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
         c.Play();
     });
 
+    /// <summary>
+    /// Radio thématique : ses premiers morceaux, dans l'ordre, sans répétition. Chacun porte la radio, que le service
+    /// suit pour compléter la file (<see cref="QueueRefill"/>), même après une reprise.
+    /// </summary>
+    public Task PlayStationAsync(string stationId, IReadOnlyList<TrackDto> tracks) => OnMain(c =>
+    {
+        if (tracks.Count == 0) return;
+        c.ShuffleModeEnabled = false;
+        c.RepeatMode = PlayerConst.RepeatOff;
+        c.SetMediaItems(tracks.Select(t => browser.StationItem(t, stationId)).ToList(), 0, 0);
+        c.Prepare();
+        c.Play();
+    });
+
     public Task TogglePlayAsync() => OnMain(c =>
     {
         if (c.IsPlaying)
