@@ -1,24 +1,28 @@
 # SonNuage Android
 
-Application Android de [SonNuage](https://github.com/SonNuage/sonnuage), serveur de musique auto-hébergé :
-.NET MAUI Blazor Hybrid (mêmes pages que le client web) et service de lecture Media3 (notification, Android Auto).
+**English** · [Français](README.fr.md)
 
-| Dossier | Rôle |
+Android app for [SonNuage](https://github.com/SonNuage/sonnuage), a self-hosted music server:
+.NET MAUI Blazor Hybrid (same pages as the web client) and a Media3 playback service (notification, Android Auto).
+
+Status: works, used every day. The project is young and still in development.
+
+| Folder | Role |
 |---|---|
-| `src/SonNuage.Mobile` | Application : hôte Blazor, lecteur Media3, Android Auto, stockage sécurisé des comptes |
-| `build/` | Image de build (SDK Android + workload MAUI) et script d'APK sans Android Studio |
+| `src/SonNuage.Mobile` | App: Blazor host, Media3 player, Android Auto, secure storage of the accounts |
+| `build/` | Build image (Android SDK + MAUI workload) and APK script without Android Studio |
 
-Les pages et composants viennent de la bibliothèque `SonNuage.UI` du dépôt
-[sonnuage](https://github.com/SonNuage/sonnuage) :
+The pages and components come from the `SonNuage.UI` library of the
+[sonnuage](https://github.com/SonNuage/sonnuage) repository:
 
-- **en CI** : paquet NuGet publié par la CI de `sonnuage` (version dans `Directory.Packages.props`)
-- **en développement** : si `sonnuage` est cloné à côté de ce dépôt (`../sonnuage`), ses sources sont utilisées
-  directement (voir `Directory.Build.props`, propriété `SonNuageRepo`).
+- **in CI**: NuGet package published by the CI of `sonnuage` (version in `Directory.Packages.props`)
+- **in development**: if `sonnuage` is cloned next to this repository (`../sonnuage`), its sources are used
+  directly (see `Directory.Build.props`, property `SonNuageRepo`).
 
-Pour suivre une nouvelle version du serveur, monter `SonNuage.UI` dans `Directory.Packages.props` à la version
-publiée (`X.Y.Z` pour un tag du serveur, `0.1.0-ci.N` pour un build de `main`).
+To follow a new server version, raise `SonNuage.UI` in `Directory.Packages.props` to the published
+version (`X.Y.Z` for a server tag, `0.1.0-ci.N` for a build of `main`).
 
-## APK sans Android Studio
+## APK without Android Studio
 
 ```bash
 docker build -f build/android-sdk.Dockerfile -t sonnuage-android-sdk build
@@ -28,34 +32,34 @@ docker build -f build/android-sdk.Dockerfile -t sonnuage-android-sdk build
 docker run --rm -v "$PWD:/host:ro" -v "$PWD/../sonnuage:/sonnuage-src:ro" -v "$PWD/out:/out" -v sonnuage-nuget:/root/.nuget/packages sonnuage-android-sdk sh /host/build/build-apk.sh Release
 ```
 
-Un seul fichier est produit : `out/sonnuage-release.apk`, signé et installable. `dotnet publish` génère aussi un
-`org.pmjb.sonnuage.apk` **non signé** : c'est un intermédiaire, Android refuse de l'installer, il n'est donc pas
-copié. Sans keystore, l'APK local est signé avec la clé de debug de l'image : pour mettre à jour par-dessus un APK
-de la CI (autre clé), il faut d'abord désinstaller l'appli.
+A single file is produced: `out/sonnuage-release.apk`, signed and installable. `dotnet publish` also generates an
+**unsigned** `org.pmjb.sonnuage.apk`: it is an intermediate file, Android refuses to install it, so it is not
+copied. Without a keystore, the local APK is signed with the image's debug key: to update over an APK
+from the CI (another key), the app must be uninstalled first.
 
-## Fonctionnement
+## How it works
 
-- **Comptes** : au premier lancement, l'application demande l'adresse du serveur puis l'identifiant. Plusieurs
-  comptes (un utilisateur sur un serveur, éventuellement plusieurs serveurs) peuvent être connectés en même temps.
-  **Réglages › Comptes** affiche le compte actif, permet d'en ajouter un, de changer de compte actif ou de se
-  déconnecter d'un compte précis. Le compte actif fixe la bibliothèque, la lecture, Android Auto et la notification.
-  En changer arrête la lecture et recharge la file sauvegardée de l'autre compte.
-- Chaque compte a ses propres jetons (SecureStorage, renouvelés un par un avec un verrou par compte), sa file
-  d'attente, ses réglages de lecture et ses entrées du cache audio. Une installation mono-compte antérieure est
-  migrée automatiquement en un premier compte (session, file et réglages compris).
-- **Plantages** : toute exception non gérée (.NET, tâches, Java) est écrite dans `crash.log` (dossier privé de
-  l'appli) et dans logcat (`adb logcat -s SonNuage`). Au lancement suivant, un écran natif affiche le rapport avec un
-  bouton « Copier le rapport ». Si le démarrage lui-même échoue, cet écran remplace l'interface.
+- **Accounts**: on first launch, the app asks for the server address, then the login. Several
+  accounts (one user on one server, possibly several servers) can be signed in at the same time.
+  **Settings › Accounts** shows the active account, and lets you add one, change the active account or sign
+  out of a given account. The active account sets the library, playback, Android Auto and the notification.
+  Changing it stops playback and reloads the saved queue of the other account.
+- Each account has its own tokens (SecureStorage, renewed one by one with a lock per account), its
+  queue, its playback settings and its entries in the audio cache. An earlier single-account install is
+  migrated automatically into a first account (session, queue and settings included).
+- **Crashes**: any unhandled exception (.NET, tasks, Java) is written to `crash.log` (the app's private
+  folder) and to logcat (`adb logcat -s SonNuage`). On the next launch, a native screen shows the report with a
+  "Copy the report" button. If startup itself fails, this screen replaces the interface.
 
-## CI/CD GitLab
+## GitLab CI/CD
 
-[.gitlab-ci.yml](.gitlab-ci.yml) : image de build (quand sa recette change) → APK signé en artefact
-(`dist/sonnuage-X.Y.Z.apk`, signature vérifiée par `apksigner`) → sur `main`, semantic-release crée le tag `vX.Y.Z`
-et sa release, à laquelle le pipeline du tag joint l'APK (registre de paquets génériques).
+[.gitlab-ci.yml](.gitlab-ci.yml): build image (when its recipe changes) → signed APK as an artifact
+(`dist/sonnuage-X.Y.Z.apk`, signature checked by `apksigner`) → on `main`, semantic-release creates the `vX.Y.Z` tag
+and its release, to which the tag's pipeline attaches the APK (generic package registry).
 
-La signature utilise les variables masquées `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
-`ANDROID_KEY_ALIAS` et `ANDROID_KEY_PASSWORD`. Elles portent la clé qui signait déjà les APK : une autre clé
-obligerait à désinstaller l'application avant de mettre à jour. Un nouveau keystore se crée avec :
+Signing uses the masked variables `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`,
+`ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD`. They hold the key that already signed the APKs: another key
+would force users to uninstall the app before updating. A new keystore is created with:
 
 ```bash
 keytool -genkeypair -v -keystore sonnuage.keystore -alias sonnuage -keyalg RSA -keysize 4096 -validity 10000
@@ -63,25 +67,25 @@ keytool -genkeypair -v -keystore sonnuage.keystore -alias sonnuage -keyalg RSA -
 
 ### Versions
 
-Les versions sont publiées par [semantic-release](https://semantic-release.gitbook.io/) ([.releaserc.json](.releaserc.json)),
-d'après les messages de commit au format [Conventional Commits](https://www.conventionalcommits.org/fr/) :
-`fix: …` donne un correctif (1.0.1), `feat: …` une version mineure (1.1.0), `feat!: …` ou un pied de page
-`BREAKING CHANGE:` une version majeure (2.0.0). `docs`, `chore`, `ci`, `refactor`, `test` ne publient rien.
-Sur `main`, le job `semantic-release` crée le tag `vX.Y.Z` et la release GitLab avec ses notes. Le pipeline du
-tag publie ensuite la version. Il utilise `GITLAB_TOKEN`, jeton du groupe `sonnuage` (variable masquée et protégée,
-tags `v*` protégés).
+Versions are published by [semantic-release](https://semantic-release.gitbook.io/) ([.releaserc.json](.releaserc.json)),
+from the commit messages in the [Conventional Commits](https://www.conventionalcommits.org/en/) format:
+`fix: …` gives a patch (1.0.1), `feat: …` a minor version (1.1.0), `feat!: …` or a
+`BREAKING CHANGE:` footer a major version (2.0.0). `docs`, `chore`, `ci`, `refactor`, `test` publish nothing.
+On `main`, the `semantic-release` job creates the `vX.Y.Z` tag and the GitLab release with its notes. The tag's
+pipeline then publishes the version. It uses `GITLAB_TOKEN`, a token of the `sonnuage` group (masked and protected variable,
+protected `v*` tags).
 
 ### GitHub Actions
 
-[.github/workflows/ci.yml](.github/workflows/ci.yml) produit le même APK signé sur GitHub. Il extrait le dépôt
-`sonnuage` du même propriétaire à côté de celui-ci et compile contre ses sources, sans registre NuGet. Secrets à
-définir : les quatre variables de signature ci-dessus, plus `SONNUAGE_REPO_TOKEN` (jeton en lecture) si le dépôt
-`sonnuage` est privé. Sur un tag `vX.Y.Z`, l'APK est joint à une release GitHub.
+[.github/workflows/ci.yml](.github/workflows/ci.yml) produces the same signed APK on GitHub. It checks out the
+`sonnuage` repository of the same owner next to this one and builds against its sources, without a NuGet registry. Secrets to
+define: the four signing variables above, plus `SONNUAGE_REPO_TOKEN` (read token) if the `sonnuage` repository
+is private. On a `vX.Y.Z` tag, the APK is attached to a GitHub release.
 
 ## Licence
 
-SonNuage est un logiciel libre sous licence [GNU AGPL v3.0 ou ultérieure](LICENSE) : chacun peut l'utiliser,
-l'étudier, le modifier et le redistribuer. Une version modifiée, y compris proposée comme service en ligne, doit
-publier son code source sous la même licence.
+SonNuage is free software under the [GNU AGPL v3.0 or later](LICENSE) licence: anyone can use it,
+study it, modify it and redistribute it. A modified version, including one offered as an online service, must
+publish its source code under the same licence.
 
-Copyright © 2026 pmj.bailly et les contributeurs de SonNuage.
+Copyright © 2026 pmj.bailly and the SonNuage contributors.
