@@ -45,7 +45,7 @@
   </ItemGroup>
 
   <!-- SDK Glyph Matrix de Nothing (matrice du Phone 3). Sa licence interdit de le redistribuer : il n'est pas dans le
-       dépôt mais téléchargé au build depuis le dépôt officiel, à une version figée et vérifiée par sha256. -->
+       dépôt mais téléchargé au build depuis le dépôt officiel, à une version figée et vérifiée par sha256, dès la restauration : les AAR sont extraits avant BeforeBuild. -->
   <PropertyGroup>
     <GlyphSdkUrl>https://raw.githubusercontent.com/Nothing-Developer-Programme/GlyphMatrix-Developer-Kit/999b1143a6bff0dd79db11d21b92c15c56a346b1/glyph-matrix-sdk-2.0.aar</GlyphSdkUrl>
     <GlyphSdkSha256>be00ee9cd7115f6b11984c6e31fe98e298fb726940d1555063610685ef3bbf29</GlyphSdkSha256>
@@ -55,7 +55,7 @@
   <ItemGroup>
     <AndroidLibrary Include="$(GlyphSdkAar)" />
   </ItemGroup>
-  <Target Name="DownloadGlyphSdk" BeforeTargets="BeforeBuild;PrepareForBuild" Condition="!Exists('$(GlyphSdkAar)')">
+  <Target Name="DownloadGlyphSdk" BeforeTargets="Restore;CollectPackageReferences;PrepareForBuild;BeforeBuild" Condition="!Exists('$(GlyphSdkAar)')">
     <DownloadFile SourceUrl="$(GlyphSdkUrl)" DestinationFolder="$(GlyphSdkDir)" DestinationFileName="glyph-matrix-sdk-2.0.aar.part" Retries="3" />
     <GetFileHash Files="$(GlyphSdkAar).part" Algorithm="SHA256">
       <Output TaskParameter="Hash" PropertyName="_GlyphSdkHash" />
