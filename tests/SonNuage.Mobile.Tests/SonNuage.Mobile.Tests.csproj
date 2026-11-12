@@ -21,6 +21,7 @@
     <Compile Include="..\..\src\SonNuage.Mobile\Playback\ShuffleOrder.cs" Link="Playback\ShuffleOrder.cs" />
     <Compile Include="..\..\src\SonNuage.Mobile\Playback\QueueRefill.cs" Link="Playback\QueueRefill.cs" />
     <Compile Include="..\..\src\SonNuage.Mobile\Services\SharedConnection.cs" Link="Services\SharedConnection.cs" />
+    <Compile Include="..\..\src\SonNuage.Mobile\Glyph\CloudGlyph.cs" Link="Glyph\CloudGlyph.cs" />
   </ItemGroup>
 
   <ItemGroup>
