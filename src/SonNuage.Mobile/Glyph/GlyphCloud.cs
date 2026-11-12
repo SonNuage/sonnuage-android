@@ -158,7 +158,7 @@ public sealed class GlyphCloud : Java.Lang.Object, GlyphMatrixManager.ICallback
         for (var i = 0; i < levels.Length; i++)
         {
             var v = levels[i];
-            pixels[i] = Color.Argb(v, v, v, v);
+            pixels[i] = Color.Argb(v, v, v, v).ToArgb();
         }
         using var bitmap = Bitmap.CreateBitmap(pixels, CloudGlyph.Size, CloudGlyph.Size, Bitmap.Config.Argb8888!)!;
         var image = new GlyphMatrixObject.Builder()
