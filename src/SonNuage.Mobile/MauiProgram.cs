@@ -24,7 +24,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<IServerEndpoint, AccountEndpoint>();
         builder.Services.AddSingleton<IPlatformInfo, MobilePlatform>();
         builder.Services.AddSingleton<AndroidPlayer>();
-        builder.Services.AddSingleton<IPlayer>(sp => sp.GetRequiredService<AndroidPlayer>());
+        // Un seul appareil du compte joue (téléphone, PC, onglet…). Les autres le pilotent (voir LinkedPlayer).
+        builder.Services.AddSingleton<IPlayer>(sp => new LinkedPlayer(
+            sp.GetRequiredService<AndroidPlayer>(), sp.GetRequiredService<AndroidPlayer>(), sp.GetRequiredService<ServerPlaybackLink>()));
         builder.Services.AddSingleton<LibraryBrowser>();
         builder.Services.AddSingleton<QueueStore>();
         builder.Services.AddSonNuageUi(multiAccount: true);

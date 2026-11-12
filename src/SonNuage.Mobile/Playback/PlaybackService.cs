@@ -106,6 +106,12 @@ public sealed class PlaybackService : MediaLibraryService
         // avant nos traitements.
         player.AddListener(new PlayerEvents(player, _prefetcher, crossfader, queue, () => _queueKey, api, settings, browser, _glyph));
         accounts.ActiveChanged += OnAccountChanged;
+        // Les autres appareils du compte voient ce que joue le téléphone et le pilotent, même sans interface ouverte.
+        if (services.GetRequiredService<SonNuage.UI.Services.IPlayer>() is LinkedPlayer linked)
+        {
+            _ = services.GetRequiredService<Services.AndroidPlayer>().AttachAsync();
+            _ = linked.ConnectAsync();
+        }
     }
 
     /// <summary>

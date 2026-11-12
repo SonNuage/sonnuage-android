@@ -15,14 +15,14 @@ namespace SonNuage.Mobile.Services;
 /// La file vit dans le service, ce qui la partage avec la notification et Android Auto. L'état exposé ici est
 /// relu depuis le contrôleur à chaque événement. Le MediaController n'est utilisable que depuis le thread principal.
 /// </summary>
-public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settings, LibraryBrowser browser, Breadcrumbs crumbs) : IPlayer, IRestorablePlayer
+public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settings, LibraryBrowser browser, Breadcrumbs crumbs) : IPlayer, IRestorablePlayer, IAdoptablePlayer
 {
     private MediaController? _controller;
     private SharedConnection<MediaController>? _connection;
     private PlayerState _state = PlayerState.Empty;
     private IReadOnlyList<TrackDto> _queue = [];
     private readonly Dictionary<Guid, TrackDto> _updated = [];
-    private IDispatcherTimer? _ticker;
+    private Ticker? _ticker;
 
     public PlayerState State => _state;
 
@@ -34,6 +34,35 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
     {
         if (c.MediaItemCount > 0) return;
         if (await queueStore.LoadAsync() is { } saved) saved.LoadInto(c);
+    });
+
+    /// <summary>
+    /// Se relie au service de lecture sans rien changer à sa file : l'état (et donc ce que voient les autres appareils
+    /// du compte) suit dès que le service joue, même sans interface ouverte (Android Auto, notification).
+    /// </summary>
+    public Task AttachAsync() => OnMain(_ => { });
+
+    /// <summary>Reprend ici la lecture d'un autre appareil du compte : sa file dans son ordre, à sa position.</summary>
+    public Task AdoptAsync(PlayerState state, bool autoplay) => OnMain(c =>
+    {
+        if (state.Queue.Count == 0) return;
+        c.ShuffleModeEnabled = false;
+        c.RepeatMode = state.Repeat switch
+        {
+            RepeatMode.All => PlayerConst.RepeatAll,
+            RepeatMode.One => PlayerConst.RepeatOne,
+            _ => PlayerConst.RepeatOff,
+        };
+        var index = Math.Clamp(state.CurrentIndex, 0, state.Queue.Count - 1);
+        c.SetMediaItems(state.Queue.Select(browser.Item).ToList(), index, (long)(state.PositionSeconds * 1000));
+        c.Prepare();
+        if (autoplay) c.Play();
+    });
+
+    /// <summary>Un autre appareil du compte joue : celui-ci se met en pause, sa file reste.</summary>
+    public Task ReleaseAsync() => OnMain(c =>
+    {
+        if (c.IsPlaying) c.Pause();
     });
 
     public Task PlayAsync(IReadOnlyList<TrackDto> tracks, int startIndex = 0, bool? shuffle = null) => OnMain(c =>
@@ -150,12 +179,7 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
         var controller = result.JavaCast<MediaController>()!;
         controller.AddListener(new Listener(this));
         _controller = controller;
-        if (_ticker is null)
-        {
-            _ticker = Application.Current!.Dispatcher.CreateTimer();
-            _ticker.Interval = TimeSpan.FromMilliseconds(500);
-            _ticker.Tick += (_, _) => Refresh(timelineChanged: false);
-        }
+        _ticker ??= new Ticker(TimeSpan.FromMilliseconds(500), () => Refresh(timelineChanged: false));
         Refresh(timelineChanged: true);
         return controller;
     }
@@ -197,6 +221,37 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
             else if (!c.IsPlaying && _ticker.IsRunning) _ticker.Stop();
         }
         StateChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// Relecture de la position pendant la lecture, sur le thread principal. Par un Handler Android et non par le
+    /// Dispatcher de MAUI : le service peut démarrer sans interface (Android Auto), donc sans Application MAUI.
+    /// </summary>
+    private sealed class Ticker(TimeSpan interval, Action tick) : Java.Lang.Object, Java.Lang.IRunnable
+    {
+        private readonly Android.OS.Handler _handler = new(Android.OS.Looper.MainLooper!);
+
+        public bool IsRunning { get; private set; }
+
+        public void Start()
+        {
+            if (IsRunning) return;
+            IsRunning = true;
+            _handler.PostDelayed(this, (long)interval.TotalMilliseconds);
+        }
+
+        public void Stop()
+        {
+            IsRunning = false;
+            _handler.RemoveCallbacks(this);
+        }
+
+        public void Run()
+        {
+            if (!IsRunning) return;
+            tick();
+            if (IsRunning) _handler.PostDelayed(this, (long)interval.TotalMilliseconds);
+        }
     }
 
     private sealed class Listener(AndroidPlayer owner) : Java.Lang.Object, IPlayerListener

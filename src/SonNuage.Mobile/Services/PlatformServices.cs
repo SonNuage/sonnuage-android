@@ -87,6 +87,8 @@ public sealed class MobilePlatform : IPlatformInfo
 {
     public bool HasMeteredNetworkDetection => true;
     public string Name => "android";
+    /// <summary>Nom du téléphone dans ses réglages (« Pixel de Phil »), sinon son modèle.</summary>
+    public Task<string?> DeviceNameAsync() => Task.FromResult<string?>(Microsoft.Maui.Devices.DeviceInfo.Current.Name);
     /// <summary>Version de l'APK (versionName), affichée dans l'aide et le menu du compte.</summary>
     public string? AppVersion => Microsoft.Maui.ApplicationModel.AppInfo.Current.VersionString;
 
