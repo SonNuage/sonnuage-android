@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+    <!-- Le SDK Glyph Matrix de Nothing déclare Android 13 minimum : l'appli reste installable dès Android 8, elle ne
+         l'appelle que sur un Nothing Phone (3) (GlyphCloud.Supported). -->
+    <uses-sdk tools:overrideLibrary="com.nothing.thirdparty" />
     <!-- Pas de sauvegarde automatique : restaurées sur un autre appareil ou après réinstallation, les préférences
          chiffrées de SecureStorage (jetons) sont illisibles sans la clé Keystore d'origine. -->
     <application
@@ -24,4 +27,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Matrice Glyph du Nothing Phone (3) : animation du logo pendant la lecture et Glyph Toy SonNuage. -->
+    <uses-permission android:name="com.nothing.ketchum.permission.ENABLE" />
 </manifest>

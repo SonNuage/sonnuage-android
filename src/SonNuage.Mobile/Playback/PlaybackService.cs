@@ -39,6 +39,7 @@ public sealed class PlaybackService : MediaLibraryService
     private AccountStore? _accounts;
     private QueueStore? _queue;
     private Crossfader? _crossfader;
+    private Glyph.GlyphCloud? _glyph;
 
     /// <summary>Clé de sauvegarde de la file actuellement chargée (celle du compte à qui elle appartient).</summary>
     private string? _queueKey;
@@ -95,6 +96,7 @@ public sealed class PlaybackService : MediaLibraryService
         var crossfader = _crossfader = new Crossfader(exo, player, tail, settings);
 
         _prefetcher = new Prefetcher(cached, resolver, settings);
+        _glyph = Glyph.GlyphCloud.ForApp(this);
 
         var activity = PendingIntent.GetActivity(this, 0, new Intent(this, typeof(MainActivity)), PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         _session = new MediaLibrarySession.Builder(this, player, new LibraryCallback(browser, queue))
@@ -102,7 +104,7 @@ public sealed class PlaybackService : MediaLibraryService
             .Build();
         // Après la session : à chaque changement de piste, elle publie le nouveau titre (notification, Android Auto)
         // avant nos traitements.
-        player.AddListener(new PlayerEvents(player, _prefetcher, crossfader, queue, () => _queueKey, api, settings, browser));
+        player.AddListener(new PlayerEvents(player, _prefetcher, crossfader, queue, () => _queueKey, api, settings, browser, _glyph));
         accounts.ActiveChanged += OnAccountChanged;
     }
 
@@ -141,6 +143,9 @@ public sealed class PlaybackService : MediaLibraryService
         _prefetcher?.Cancel();
         _crossfader?.Release();
         _crossfader = null;
+        Glyph.GlyphCloud.MusicPlaying = false;
+        _glyph?.Close();
+        _glyph = null;
         if (_session is not null)
         {
             _session.Player?.Release();
@@ -163,7 +168,7 @@ public sealed class PlaybackService : MediaLibraryService
     }
 
     /// <summary>Événements du lecteur : pré-chargement, historique d'écoute, sauvegarde de la file.</summary>
-    private sealed class PlayerEvents(Media3IPlayer player, Prefetcher prefetcher, Crossfader crossfader, QueueStore queue, Func<string?> queueKey, ApiClient api, PlaybackSettings settings, LibraryBrowser browser) : Java.Lang.Object, IPlayerListener
+    private sealed class PlayerEvents(Media3IPlayer player, Prefetcher prefetcher, Crossfader crossfader, QueueStore queue, Func<string?> queueKey, ApiClient api, PlaybackSettings settings, LibraryBrowser browser, Glyph.GlyphCloud? glyph) : Java.Lang.Object, IPlayerListener
     {
         // Un seul appel de lecture infinie à la fois : deux changements de piste rapprochés ne doivent pas doubler l'ajout.
         private bool _extending;
@@ -261,6 +266,9 @@ public sealed class PlaybackService : MediaLibraryService
         public void OnIsPlayingChanged(bool isPlaying)
         {
             if (!isPlaying) queue.Save(player, queueKey());
+            // Nothing Phone (3) : le nuage danse sur la matrice Glyph pendant la lecture.
+            Glyph.GlyphCloud.MusicPlaying = isPlaying;
+            glyph?.Show(isPlaying);
         }
 
         public void OnPositionDiscontinuity(PlayerPositionInfo? oldPosition, PlayerPositionInfo? newPosition, int reason)
