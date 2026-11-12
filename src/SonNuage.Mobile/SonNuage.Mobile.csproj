@@ -44,6 +44,26 @@
     <PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" />
   </ItemGroup>
 
+  <!-- SDK Glyph Matrix de Nothing (matrice du Phone 3). Sa licence interdit de le redistribuer : il n'est pas dans le
+       dépôt mais téléchargé au build depuis le dépôt officiel, à une version figée et vérifiée par sha256. -->
+  <PropertyGroup>
+    <GlyphSdkUrl>https://raw.githubusercontent.com/Nothing-Developer-Programme/GlyphMatrix-Developer-Kit/999b1143a6bff0dd79db11d21b92c15c56a346b1/glyph-matrix-sdk-2.0.aar</GlyphSdkUrl>
+    <GlyphSdkSha256>be00ee9cd7115f6b11984c6e31fe98e298fb726940d1555063610685ef3bbf29</GlyphSdkSha256>
+    <GlyphSdkDir>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)glyph\</GlyphSdkDir>
+    <GlyphSdkAar>$(GlyphSdkDir)glyph-matrix-sdk-2.0.aar</GlyphSdkAar>
+  </PropertyGroup>
+  <ItemGroup>
+    <AndroidLibrary Include="$(GlyphSdkAar)" />
+  </ItemGroup>
+  <Target Name="DownloadGlyphSdk" BeforeTargets="BeforeBuild;PrepareForBuild" Condition="!Exists('$(GlyphSdkAar)')">
+    <DownloadFile SourceUrl="$(GlyphSdkUrl)" DestinationFolder="$(GlyphSdkDir)" DestinationFileName="glyph-matrix-sdk-2.0.aar.part" Retries="3" />
+    <GetFileHash Files="$(GlyphSdkAar).part" Algorithm="SHA256">
+      <Output TaskParameter="Hash" PropertyName="_GlyphSdkHash" />
+    </GetFileHash>
+    <Error Condition="'$(_GlyphSdkHash)' != '$(GlyphSdkSha256)'" Text="SDK Glyph Matrix : sha256 $(_GlyphSdkHash) au lieu de $(GlyphSdkSha256)." />
+    <Move SourceFiles="$(GlyphSdkAar).part" DestinationFiles="$(GlyphSdkAar)" />
+  </Target>
+
   <!-- Pages et composants partagés avec le client web : sources du dépôt sonnuage s'il est cloné à côté (développement),
        sinon paquet NuGet publié par sa CI (version dans Directory.Packages.props). -->
   <ItemGroup Condition="Exists('$(SonNuageUiProject)')">
