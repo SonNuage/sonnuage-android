@@ -18,6 +18,24 @@ public sealed class GlyphCloud : Java.Lang.Object, GlyphMatrixManager.ICallback
     /// <summary>Musique en cours dans SonNuage : le Toy anime le logo, sinon il l'affiche fixe.</summary>
     public static volatile bool MusicPlaying;
 
+    private const string EnabledKey = "sonnuage.glyph.enabled";
+
+    /// <summary>
+    /// Réglage utilisateur (Réglages de l'appli) : activé par défaut sur un Nothing Phone (3). Lu directement dans
+    /// les préférences du système (pas besoin du conteneur d'injection, utilisable depuis le service de lecture).
+    /// </summary>
+    public static bool Enabled
+    {
+        get => Preferences.Default.Get(EnabledKey, true);
+        set => Preferences.Default.Set(EnabledKey, value);
+    }
+
+    /// <summary>Instance de l'appli actuellement créée (<see cref="ForApp"/>), pour appliquer le réglage sans attendre
+    /// le prochain changement de lecture.</summary>
+    private static GlyphCloud? _current;
+
+    public static void ApplyEnabled(bool enabled) => _current?.Show(enabled && MusicPlaying);
+
     private readonly Context _context;
     private readonly bool _toy;
     private readonly object _lock = new();
@@ -30,6 +48,7 @@ public sealed class GlyphCloud : Java.Lang.Object, GlyphMatrixManager.ICallback
     {
         _context = context.ApplicationContext ?? context;
         _toy = toy;
+        if (!toy) _current = this;
     }
 
     /// <summary>
@@ -71,6 +90,7 @@ public sealed class GlyphCloud : Java.Lang.Object, GlyphMatrixManager.ICallback
             _manager?.UnInit();
             _manager = null;
             _connected = false;
+            if (_current == this) _current = null;
         }
     }
 

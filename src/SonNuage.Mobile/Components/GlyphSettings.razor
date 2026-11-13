@@ -1,0 +1,25 @@
+@* Réglage du Glyph (matrice du Nothing Phone 3), affiché par la page Réglages de SonNuage.UI
+   (IPlatformInfo.SettingsSections). Grisé sur tout autre téléphone : GlyphCloud.Supported ne dépend que de propriétés
+   système, lues sans risque sur n'importe quel appareil. *@
+<section class="panel">
+    <h2>@L["glyph.title"]</h2>
+    <label class="field check">
+        <input id="glyph-enabled" type="checkbox" checked="@_enabled" disabled="@(!GlyphCloud.Supported)" @onchange="e => SetEnabledAsync(e.Value is true)" />
+        <span>@L["glyph.toggle"]</span>
+    </label>
+    <small class="muted">@(GlyphCloud.Supported ? L["glyph.hint"] : L["glyph.unsupported"])</small>
+</section>
+
+@code {
+    private bool _enabled;
+
+    protected override void OnInitialized() => _enabled = GlyphCloud.Enabled;
+
+    private Task SetEnabledAsync(bool enabled)
+    {
+        _enabled = enabled;
+        GlyphCloud.Enabled = enabled;
+        GlyphCloud.ApplyEnabled(enabled);
+        return Task.CompletedTask;
+    }
+}

@@ -272,9 +272,9 @@ public sealed class PlaybackService : MediaLibraryService
         public void OnIsPlayingChanged(bool isPlaying)
         {
             if (!isPlaying) queue.Save(player, queueKey());
-            // Nothing Phone (3) : le nuage danse sur la matrice Glyph pendant la lecture.
+            // Nothing Phone (3) : le nuage danse sur la matrice Glyph pendant la lecture, sauf si désactivé dans Réglages.
             Glyph.GlyphCloud.MusicPlaying = isPlaying;
-            glyph?.Show(isPlaying);
+            glyph?.Show(isPlaying && Glyph.GlyphCloud.Enabled);
         }
 
         public void OnPositionDiscontinuity(PlayerPositionInfo? oldPosition, PlayerPositionInfo? newPosition, int reason)

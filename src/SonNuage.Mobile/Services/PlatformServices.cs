@@ -98,4 +98,7 @@ public sealed class MobilePlatform : IPlatformInfo
         var cm = (Android.Net.ConnectivityManager?)Android.App.Application.Context.GetSystemService(Android.Content.Context.ConnectivityService);
         return cm?.IsActiveNetworkMetered ?? false;
     }
+
+    /// <summary>Réglage du Glyph (Nothing Phone 3), toujours affiché mais grisé ailleurs (voir GlyphSettings.razor).</summary>
+    public IReadOnlyList<Type> SettingsSections { get; } = [typeof(SonNuage.Mobile.Components.GlyphSettings)];
 }
