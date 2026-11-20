@@ -150,7 +150,9 @@ public sealed class LibraryBrowser(ApiClient api, AuthSession auth)
 
     /// <summary>Piste venue de la radio <paramref name="station"/> (null : d'ailleurs).</summary>
     public MediaItem StationItem(TrackDto track, string? station) =>
-        TrackItems.From(track, api.CoverUrl(track.HasCover ? track.AlbumId : null, 600), station);
+        TrackItems.From(track, YoutubeTracks.VideoId(track) is { } video
+            ? $"https://i.ytimg.com/vi/{video}/hqdefault.jpg"
+            : api.CoverUrl(track.HasCover ? track.AlbumId : null, 600), station);
 
     /// <summary>
     /// Radios du serveur ; aucune sur un serveur antérieur (404, lu comme null) ou injoignable : le reste du dossier

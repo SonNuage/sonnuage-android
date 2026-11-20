@@ -1,3 +1,4 @@
+using AndroidX.Media3.Common;
 using AndroidX.Media3.DataSource;
 using AndroidX.Media3.DataSource.Cache;
 using SonNuage.Contracts;
@@ -13,10 +14,12 @@ namespace SonNuage.Mobile.Playback;
 /// aucun octet réseau, et l'adresse elle-même n'est pas indispensable.
 /// Le cache est cloisonné par compte : la clé commence par l'identifiant du compte actif.
 /// </summary>
-public sealed class StreamResolver(ApiClient api, PlaybackSettings settings, AccountStore accounts, ICache cache) : Java.Lang.Object, ResolvingDataSource.IResolver
+public sealed class StreamResolver(ApiClient api, PlaybackSettings settings, AccountStore accounts, ICache cache, YoutubeDirect youtube)
+    : Java.Lang.Object, ResolvingDataSource.IResolver
 {
     public DataSpec? ResolveDataSpec(DataSpec? dataSpec)
     {
+        if (dataSpec is not null && TrackItems.VideoIdFromUri(dataSpec.Uri) is { } video) return ResolveYoutube(dataSpec, video);
         if (dataSpec is null || TrackItems.TrackIdFromUri(dataSpec.Uri) is not { } id) return dataSpec;
 
         var wanted = MobilePlatform.IsMetered() ? settings.MobileQuality : settings.Quality;
@@ -46,6 +49,39 @@ public sealed class StreamResolver(ApiClient api, PlaybackSettings settings, Acc
         if (url is not null) return dataSpec.BuildUpon()!.SetUri(Android.Net.Uri.Parse(url))!.SetKey(key)!.Build();
         if (cached is not null) return FromCache();
         throw new Java.IO.IOException(NativeText.Get("android.sessionExpired", "Session expirée : reconnectez-vous dans l'application."));
+    }
+
+    /// <summary>
+    /// Titre YouTube direct : URL googlevideo (déjà en cache après la recherche du Jam, sinon ~0,2 s). Toujours avec un
+    /// en-tête Range : sans lui, YouTube bride le débit (1 Mo en 30 s au lieu de 0,3 s).
+    /// </summary>
+    private DataSpec ResolveYoutube(DataSpec dataSpec, string video)
+    {
+        var key = $"yt/{video}";
+        var cachedLength = cache.GetContentMetadata(key)?.Get("exo_len", -1) ?? -1;
+        if (cachedLength > 0 && cache.IsCached(key, 0, cachedLength)) return dataSpec.BuildUpon()!.SetKey(key)!.Build()!;
+        YoutubeAudio? audio;
+        try
+        {
+            audio = youtube.AudioAsync(video).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            throw new Java.IO.IOException(ex.Message);
+        }
+        if (audio is null) throw new Java.IO.IOException($"YouTube : flux indisponible ({video})");
+        var builder = dataSpec.BuildUpon()!.SetUri(Android.Net.Uri.Parse(audio.Url))!.SetKey(key)!;
+        // Range explicite même pour une lecture depuis le début (ExoPlayer n'en met que pour un décalage).
+        if (dataSpec.Position == 0 && dataSpec.Length == C.LengthUnset)
+        {
+            var headers = new Dictionary<string, string>();
+            if (dataSpec.HttpRequestHeaders is { } existing)
+                foreach (System.Collections.DictionaryEntry e in existing)
+                    if (e.Key?.ToString() is { } k && e.Value?.ToString() is { } v) headers[k] = v;
+            headers["Range"] = "bytes=0-";
+            builder.SetHttpRequestHeaders(headers);
+        }
+        return builder.Build()!;
     }
 
     public string Key(Guid id, StreamQuality quality) => $"{accounts.Active?.Id:N}/{id:N}-{quality.ToWire()}";

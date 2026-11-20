@@ -1,3 +1,4 @@
+using ZXing.Net.Maui.Controls;
 using SonNuage.Mobile.Playback;
 using SonNuage.Mobile.Services;
 using SonNuage.UI;
@@ -12,6 +13,8 @@ public static class MauiProgram
     {
         var builder = MauiApp.CreateBuilder();
         builder.UseMauiApp<App>();
+        // Scan du QR code d'un Jam (CameraX + ZXing.Net, sans services Google).
+        builder.UseBarcodeReader();
         builder.Services.AddMauiBlazorWebView();
         builder.Logging.AddProvider(new CrashLoggerProvider());
 #if DEBUG
@@ -30,6 +33,9 @@ public static class MauiProgram
         builder.Services.AddSingleton<LibraryBrowser>();
         builder.Services.AddSingleton<QueueStore>();
         builder.Services.AddSonNuageUi(multiAccount: true);
+        // Connexion à Spotify sur le téléphone (OAuth en boucle locale) pour « Rejoindre un Jam ».
+        builder.Services.AddSingleton<IMusicServiceAuth, SpotifyAuth>();
+        builder.Services.AddSingleton<IJamScanner, JamScanner>();
 
         var app = builder.Build();
         // Le service de lecture peut démarrer seul (Android Auto) avant toute interface : comptes (migration comprise)

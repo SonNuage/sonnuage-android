@@ -36,13 +36,19 @@ public static class TrackItems
             .Build();
         return new MediaItem.Builder()
             .SetMediaId(BrowseIds.Track(track.Id))!
-            .SetUri(StreamUri(track.Id))!
+            .SetUri(YoutubeTracks.VideoId(track) is { } video ? YoutubeUri(video) : StreamUri(track.Id))!
             .SetMediaMetadata(metadata)!
             .Build()!;
     }
 
     /// <summary>URI interne, résolue au moment du chargement (qualité selon le réseau, jeton média frais).</summary>
     public static Android.Net.Uri StreamUri(Guid trackId) => Android.Net.Uri.Parse($"{Scheme}://track/{trackId:N}")!;
+
+    /// <summary>Titre YouTube direct (Jam) : résolu en URL googlevideo au chargement.</summary>
+    public static Android.Net.Uri YoutubeUri(string videoId) => Android.Net.Uri.Parse($"{Scheme}://yt/{videoId}")!;
+
+    public static string? VideoIdFromUri(Android.Net.Uri? uri) =>
+        uri?.Scheme == Scheme && uri.Host == "yt" ? uri.LastPathSegment : null;
 
     public static Guid? TrackIdFromUri(Android.Net.Uri? uri) =>
         uri?.Scheme == Scheme && uri.Host == "track" && Guid.TryParse(uri.LastPathSegment, out var id) ? id : null;

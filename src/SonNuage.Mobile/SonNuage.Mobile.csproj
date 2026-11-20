@@ -42,6 +42,7 @@
     <PackageReference Include="Xamarin.AndroidX.Media3.DataSource" />
     <PackageReference Include="Xamarin.AndroidX.Media3.Common" />
     <PackageReference Include="Xamarin.AndroidX.Core.Core.Ktx" />
+    <PackageReference Include="ZXing.Net.Maui.Controls" />
   </ItemGroup>
 
   <!-- SDK Glyph Matrix de Nothing (matrice du Phone 3). Sa licence interdit de le redistribuer : il n'est pas dans le

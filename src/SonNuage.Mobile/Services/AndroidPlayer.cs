@@ -77,6 +77,16 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
         c.Play();
     });
 
+    /// <summary>Lance la file directement à une position : un seul chargement, sans passer par le début.</summary>
+    public Task PlayAtAsync(IReadOnlyList<TrackDto> tracks, int startIndex, double startSeconds) => OnMain(c =>
+    {
+        if (tracks.Count == 0) return;
+        var start = Math.Clamp(startIndex, 0, tracks.Count - 1);
+        c.SetMediaItems(tracks.Select(browser.Item).ToList(), start, (long)(Math.Max(0, startSeconds) * 1000));
+        c.Prepare();
+        c.Play();
+    });
+
     /// <summary>
     /// Radio thématique : ses premiers morceaux, dans l'ordre, sans répétition. Chacun porte la radio, que le service
     /// suit pour compléter la file (<see cref="QueueRefill"/>), même après une reprise.
@@ -109,6 +119,9 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
     public Task PreviousAsync() => OnMain(c => c.SeekToPrevious());
 
     public Task SeekAsync(double seconds) => OnMain(c => c.SeekTo((long)(seconds * 1000)));
+
+    /// <summary>Vitesse de lecture, hauteur conservée (Media3 étire le temps, sans effet « chipmunk »).</summary>
+    public Task SetSpeedAsync(double speed) => OnMain(c => c.SetPlaybackSpeed((float)Math.Clamp(speed, 0.5, 2.0)));
 
     public Task JumpToAsync(int queueIndex) => OnMain(c =>
     {
@@ -196,7 +209,10 @@ public sealed class AndroidPlayer(QueueStore queueStore, PlaybackSettings settin
     {
         var context = Android.App.Application.Context;
         var token = new SessionToken(context, new ComponentName(context, Java.Lang.Class.FromType(typeof(PlaybackService))));
-        var result = await new MediaController.Builder(context, token).BuildAsync()!.AsTask();
+        // Se signale à la session : ses commandes ne sont pas routées vers un Jam (voir JamRoutingPlayer).
+        var hints = new Android.OS.Bundle();
+        hints.PutBoolean(Playback.JamRoutingPlayer.AppControllerHint, true);
+        var result = await new MediaController.Builder(context, token).SetConnectionHints(hints)!.BuildAsync()!.AsTask();
         var controller = result.JavaCast<MediaController>()!;
         controller.AddListener(new Listener(this));
         // Ancien réglage par le gain du lecteur (avant le volume système) : il ne doit plus atténuer le son.
